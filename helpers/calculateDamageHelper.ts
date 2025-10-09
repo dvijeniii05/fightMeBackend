@@ -1,5 +1,8 @@
+import type { CalculatedStatsProps } from "./calculateStatsHelper";
 import { isItCritHelper } from "./critHelpers";
 import { isItEvadedHelper } from "./evasionHelper";
+import { isItFastHelper } from "./fastHelper";
+import { incomingDamageHelper } from "./incomingDamageHelper";
 
 export const calculateDamageHelper = (to: any, from: any) => {
   const critChance = from.stats.crit * 0.15 + from.buffs.addCritChance; //percent
@@ -28,7 +31,7 @@ export const calculateDamageHelper = (to: any, from: any) => {
   // value below should be multiplied to block coefficient of user's character.
   // User's character's stats should be passed in for calculation
   const isGoodBlock =
-    Object.keys(from.attack).filter((key) => {
+    Object.keys(from.attack).filter(key => {
       if (from.attack[key] && from.attack[key] === to.deffence[key]) {
         return key;
       }
@@ -52,5 +55,94 @@ export const calculateDamageHelper = (to: any, from: any) => {
     isItEvaded,
     healthLeft: to.healthLeft - finalTotalDamage,
     originalHealth: calcualtedOrigHealth,
+  };
+};
+
+interface PLayerActionAndStats extends Omit<CalculatedStatsProps, "hp"> {
+  attackTime: number;
+  blockTime: number;
+  maxHp: number;
+  hp: number;
+}
+//Below A - playerOne ; B - playerTwo
+export const calculateRoundOutcome = (
+  A: PLayerActionAndStats,
+  B: PLayerActionAndStats,
+) => {
+  const isCritA = isItCritHelper(A.critChance);
+  const isCritB = isItCritHelper(B.critChance);
+
+  const isEvadeA = isItEvadedHelper(A.evadeChance);
+  const isEvadeB = isItEvadedHelper(B.evadeChance);
+
+  const isFastA = isItFastHelper(A.fastChance);
+  const isFastB = isItFastHelper(B.fastChance);
+
+  const attackRangeA = {
+    min: Math.max(A.attackTime - A.attackArea, 0), //min limit is 0
+    max: Math.min(A.attackTime + A.attackArea, 200), //max limit is 200
+  };
+  const attackRangeB = {
+    min: Math.max(B.attackTime - B.attackArea, 0),
+    max: Math.min(B.attackTime + B.attackArea, 200),
+  };
+
+  const blockRangeA = {
+    min: Math.max(A.blockTime - A.blockArea, 0),
+    max: Math.min(A.blockTime + A.blockArea, 200),
+  };
+  const blockRangeB = {
+    min: Math.max(B.blockTime - B.blockArea, 0),
+    max: Math.min(B.blockTime + B.blockArea, 200),
+  };
+
+  const potentialDamageA =
+    A.baseDamageBoost * (isCritA ? A.critMultiplier : 1) * (isFastA ? 2.5 : 1);
+  const potentialDamageB =
+    B.baseDamageBoost * (isCritB ? B.critMultiplier : 1) * (isFastB ? 2.5 : 1);
+
+  //Below relates to block calculation. Is it blocked? If yes, then what is the amount.
+  //If block covers 50%+ of attackArea then 0 damage is dealt
+
+  const incomingDamageA = incomingDamageHelper({
+    blockRange: blockRangeA,
+    incomingAttackRange: attackRangeB,
+    incomingDamage: potentialDamageB,
+  });
+
+  const incomingDamageB = incomingDamageHelper({
+    blockRange: blockRangeB,
+    incomingAttackRange: attackRangeA,
+    incomingDamage: potentialDamageA,
+  });
+
+  const hpLeftA = Math.max(0, A.hp - (isEvadeA ? 0 : incomingDamageA.damage));
+  const hpLeftB = Math.max(0, B.hp - (isEvadeB ? 0 : incomingDamageB.damage));
+
+  return {
+    playerOne: {
+      hp: hpLeftA,
+      isCrit: isCritA,
+      isEvade: isEvadeA,
+      isFastA: isFastA,
+      incomingDamage: incomingDamageA.damage,
+      outgoingDamage: incomingDamageB.damage,
+      block: incomingDamageA.block,
+      isBlocked: incomingDamageA.isBlocked,
+      attackRange: `${attackRangeA.min}-${attackRangeA.max}`,
+      blockRange: `${blockRangeA.min}-${blockRangeA.max}`,
+    },
+    playerTwo: {
+      hp: hpLeftB,
+      isCrit: isCritB,
+      isEvade: isEvadeB,
+      isFastA: isFastB,
+      incomingDamage: incomingDamageB.damage,
+      outgoingDamage: incomingDamageA.damage,
+      block: incomingDamageB.block,
+      isBlocked: incomingDamageB.isBlocked,
+      attackRange: `${attackRangeB.min}-${attackRangeB.max}`,
+      blockRange: `${blockRangeB.min}-${blockRangeB.max}`,
+    },
   };
 };

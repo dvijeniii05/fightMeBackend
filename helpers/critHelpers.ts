@@ -1,6 +1,6 @@
 export const isItCritHelper = (critChance: number) => {
   console.log("Crite-CHANCE", critChance);
-  const maxAllowedTotalCritChance = 35;
+  const maxAllowedTotalCritChance = 70;
 
   const allowedCrit =
     critChance > maxAllowedTotalCritChance

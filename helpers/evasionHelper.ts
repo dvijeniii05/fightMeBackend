@@ -1,6 +1,6 @@
 export const isItEvadedHelper = (evasionChance: number) => {
   console.log("Evasion-CHANCE", evasionChance);
-  const maxAllowedTotalEvasionChance = 50;
+  const maxAllowedTotalEvasionChance = 70;
 
   const allowedEvasion =
     evasionChance > maxAllowedTotalEvasionChance
@@ -13,7 +13,7 @@ export const isItEvadedHelper = (evasionChance: number) => {
   const populatedEvasionPool = rawEvasionPool.fill(
     1,
     0,
-    Math.round(allowedEvasion)
+    Math.round(allowedEvasion),
   );
   console.log("MODIFIED_Evasion-CHANCE", populatedEvasionPool);
   // NEXT step would be to get a random value betweeen 0 and 99 to pick element from populatedEvasionPool
