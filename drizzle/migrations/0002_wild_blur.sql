@@ -1,1 +1,0 @@
-ALTER TABLE "hero" ADD COLUMN "is_dupe" boolean DEFAULT false NOT NULL;

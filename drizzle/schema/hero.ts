@@ -9,6 +9,7 @@ import {
   boolean,
 } from "drizzle-orm/pg-core";
 import { fightRoomSxma } from "./fightRoom";
+import { itemInstanceSxma } from "./item";
 
 export const heroSxma = pgTable("hero", {
   id: varchar("id").primaryKey().unique().notNull(),
@@ -37,21 +38,7 @@ export const statsSxma = pgTable("stats", {
   currentHp: smallint("current_hp"),
 });
 
-export const inventorySxma = pgTable("inventory", {
-  id: serial("id").primaryKey(),
-  ownerId: varchar("owner_id")
-    .notNull()
-    .references(() => heroSxma.id, { onDelete: "cascade" })
-    .unique(),
-  equipped: varchar("equipped").array().default([]), //TODO: many2many with Items
-  stashed: varchar("stashed").array().default([]), //TODO: many2many with Items
-});
-
-export const heroRelations = relations(heroSxma, ({ one }) => ({
-  inventory: one(inventorySxma, {
-    fields: [heroSxma.id],
-    references: [inventorySxma.ownerId], // Match hero.id → inventory.heroId
-  }),
+export const heroRelations = relations(heroSxma, ({ one, many }) => ({
   stats: one(statsSxma, {
     fields: [heroSxma.id],
     references: [statsSxma.ownerId], // Match hero.id → stats.heroId
@@ -64,13 +51,7 @@ export const heroRelations = relations(heroSxma, ({ one }) => ({
     fields: [heroSxma.id],
     references: [fightRoomSxma.playerTwo],
   }),
-}));
-
-export const inventoriesRelations = relations(inventorySxma, ({ one }) => ({
-  owner: one(heroSxma, {
-    fields: [inventorySxma.ownerId],
-    references: [heroSxma.id],
-  }),
+  items: many(itemInstanceSxma),
 }));
 
 export const statsRelations = relations(statsSxma, ({ one }) => ({

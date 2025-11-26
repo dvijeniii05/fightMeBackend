@@ -1,12 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "../db";
-import {
-  heroSxma,
-  inventorySxma,
-  statsSxma,
-  type InsertHero,
-} from "../schema/hero";
+import { heroSxma, statsSxma, type InsertHero } from "../schema/hero";
 import type { StatsProps } from "../../helpers/calculateStatsHelper";
+import { itemInstanceSxma } from "../schema/item";
 
 interface Props {
   data: Omit<InsertHero, "inventoryId" | "statsId">;
@@ -23,11 +19,6 @@ export const insertHero = async ({ data, isBot }: Props) => {
       })
       .returning();
     console.log("HERO_CREATE", { ...data });
-    // Insert inventory with default values
-    await tx.insert(inventorySxma).values({
-      ownerId: data.id,
-      // Default values will be used for stashed and equipped
-    });
 
     // Insert stats with default values
     await tx.insert(statsSxma).values({
@@ -47,7 +38,11 @@ export const selectHero = async (heroId: string) => {
     where: eq(heroSxma.id, heroId),
     with: {
       stats: true,
-      inventory: true,
+      items: {
+        with: {
+          template: true,
+        },
+      },
     },
   });
 
@@ -72,6 +67,11 @@ export const copyBotForFight = async (botId: string, roomId: string) => {
     where: eq(heroSxma.id, botId),
     with: {
       stats: true,
+      items: {
+        with: {
+          template: true,
+        },
+      },
     },
   });
 
@@ -107,11 +107,19 @@ export const copyBotForFight = async (botId: string, roomId: string) => {
       currentHp: botTemplate.stats?.currentHp,
     });
 
-    // Insert new inventory with default values
-    await tx.insert(inventorySxma).values({
-      ownerId: newBotId,
-      // Default values will be used for stashed and equipped
-    });
+    //TODO: Check AND update logic for items duplication!!!
+    // Copy all items from the original bot
+    if (botTemplate.items && botTemplate.items.length > 0) {
+      const itemsToInsert = botTemplate.items.map(item => ({
+        templateId: item.templateId,
+        ownerId: newBotId,
+        equipped: item.equipped,
+        equipSlot: item.equipSlot,
+        id: item.id, // keep the same id as original item
+      }));
+
+      await tx.insert(itemInstanceSxma).values(itemsToInsert);
+    }
   });
 
   // Return the new bot ID

@@ -1,0 +1,1 @@
+ALTER TABLE "item_template" ADD COLUMN "slots" jsonb DEFAULT '[]'::jsonb NOT NULL;

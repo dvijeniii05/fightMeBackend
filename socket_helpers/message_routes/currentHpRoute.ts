@@ -45,7 +45,7 @@ export const currentHpRoute = async (
             }),
           );
         }
-      }, 20000); //TODO: currently every 20 sec but should be 1 or 2 sec max
+      }, 2000); //TODO: currently every 20 sec but should be 1 or 2 sec max
     } else {
       // 500 as user doeasnt exist in the cache
     }

@@ -9,6 +9,7 @@ export const getHero = async (req: BunRequest<"/user/getHero/:heroId">) => {
     const heroData = await selectHero(heroId);
     const currTime = Math.floor(Date.now() / 1000);
     console.log(`Get Hero with heroId: ${heroId}`);
+    // console.log("GET_HERO_DATA", heroData);
     return Response.json(heroData, { status: 200 });
   } catch (err: any) {
     console.log("Error getting hero", err);

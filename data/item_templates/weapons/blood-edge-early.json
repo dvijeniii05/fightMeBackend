@@ -1,0 +1,18 @@
+{
+  "name": "Blood Edge",
+  "type": "weapon",
+  "rarity": "common",
+  "baseStats": {
+    "baseDamageBoost": 25,
+    "critChance": 3,
+    "critMultiplier": 0.2
+  },
+  "requirements": {
+    "level": 3,
+    "strength": 10
+  },
+  "description": "A crimson-stained blade once wielded by the Blood Prince's guard. Though dulled by time, it still thirsts for battle. The ancient runes along its edge pulse faintly with dark energy, whispering tales of forgotten victories.",
+  "imageUrl": "https://example.com/blood-edge-sword.png",
+  "price": 150,
+  "stackable": false
+}

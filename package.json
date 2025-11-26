@@ -6,8 +6,11 @@
     "start": "bun --hot run server.ts",
     "web": "bun --hot run app.ts",
     "dbgen": "drizzle-kit generate",
+    "dbmig": "drizzle-kit migrate",
+    "dbpush": "drizzle-kit push",
     "dbdrop": "drizzle-kit drop",
-    "dbmig": "drizzle-kit migrate"
+    "dbstudio": "drizzle-kit studio",
+    "db:update": "bun dbgen && bun dbmig"
   },
   "devDependencies": {
     "@types/bun": "^1.2.9",
