@@ -14,6 +14,8 @@ import { createItem } from "./rest_routes/createItem";
 import { getAllShopItems } from "./rest_routes/getAllShopItems";
 import { buyItem } from "./rest_routes/buyItem";
 import { moveItem } from "./rest_routes/moveItem";
+import { createBotWithItems } from "./rest_routes/createBotWithItems";
+import { forgeItem } from "./rest_routes/forgeItem";
 
 const newServer = Bun.serve({
   port: 3003,
@@ -53,11 +55,13 @@ const newServer = Bun.serve({
     "/fight/joinRoom/:heroId/:roomId": async req => await joinRoom(req),
     "/misc/createBot/:heroName": async req =>
       await createHero({ req, isBot: true }),
+    "/misc/createBotWithItems": async req => await createBotWithItems(req),
     "/misc/getAllBots": async () => await getAllBots(),
     "/misc/createItem": async req => await createItem(req),
     "/shop/getItems": async req => await getAllShopItems(req),
     "/shop/buyItem/:heroId": async req => await buyItem(req),
     "/inventory/moveItem/:heroId": async req => await moveItem(req),
+    "/inventory/forgeItem/:heroId": async req => await forgeItem(req),
 
     /*
     !!! TODO: rework socket open logic and move it to onMessage as the socket connection will now be used for everything
@@ -87,6 +91,7 @@ const newServer = Bun.serve({
     async message(ws, message: string) {
       try {
         const data = JSON.parse(message);
+        console.log("WS_CHECK", ws);
         console.log("IN_MESSAGE?", data);
         await messageRouter(newServer, ws, data);
       } catch (err) {

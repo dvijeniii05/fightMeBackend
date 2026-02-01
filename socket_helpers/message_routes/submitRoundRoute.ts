@@ -6,6 +6,9 @@ import {
 } from "../../drizzle/queries/hero";
 import { calculateRoundOutcome } from "../../helpers/calculateDamageHelper";
 import { calculateRestTime } from "../../helpers/calculateRestTime";
+import { calculateExp } from "../../helpers/calculateExpHelper";
+import { calculateSouls } from "../../helpers/calculateSoulsHelper";
+import { calculateShards } from "../../helpers/calculateShardsHelper";
 import type { Round } from "../../types/roomType";
 import {
   activeHeroesCache,
@@ -148,13 +151,21 @@ export const submitRoundRoute = async (
                     const winnerId =
                       playerOne.hp <= 0 ? playerTwo.id : playerOne.id;
 
+                    //TODO: revisit PvP exp award logic later on. Might need to remove exp award for PvP fights
+                    // const isCurrentPlayerWinner =
+                    //   winnerId === parsedMessage.heroId;
+                    // const expAwarded = calculateExp(
+                    //   isCurrentPlayerWinner,
+                    //   ws.data.isDungeon,
+                    // );
+
                     room.matchResult = {
                       isDraw: false,
                       winnerId: winnerId,
                       winnerName: room.players.find(
                         player => player.id === winnerId,
                       )?.name,
-                      exp: 100, //TODO: create exp calc logic
+                      exp: 0,
                     };
                   }
                 }
@@ -315,18 +326,40 @@ export const submitRoundRoute = async (
                   currHp: player.hp,
                 });
               } else {
+                console.log("WE_HAVE_A_WINNER...");
                 //we have a winner
-                const dummyExp = 25; //TODO: create exp calc logic
+                const isPlayerWinner = winnerId === player.id;
+                const expAwarded = calculateExp(isPlayerWinner, room.isDungeon);
+                const soulsAwarded = calculateSouls(
+                  isPlayerWinner,
+                  player.lvl,
+                  bot.lvl,
+                  room.isDungeon,
+                );
+                const shardsAwarded =
+                  room.isDungeon && room.shardsType
+                    ? calculateShards(isPlayerWinner, room.shardsType)
+                    : { a: 0, b: 0, c: 0 };
 
-                const isLvlUp = player.exp + dummyExp >= expMap[player.lvl + 1];
+                console.log("RESULT_EXP", expAwarded, room.isDungeon);
+                console.log("RESULT_SOULS", soulsAwarded);
+                console.log("RESULT_SHARDS", shardsAwarded);
+                const isLvlUp =
+                  player.exp + expAwarded >= expMap[player.lvl + 1];
 
                 await updateHeroAfterFight({
                   heroId: player.id,
-                  exp: player.exp + dummyExp,
+                  exp: player.exp + expAwarded,
                   lvl: isLvlUp ? player.lvl + 1 : player.lvl,
                   statsPoints: isLvlUp
                     ? player.statsPoints + 5
                     : player.statsPoints,
+                  souls: player.souls + soulsAwarded,
+                  shards: {
+                    a: player.shardsA + shardsAwarded.a,
+                    b: player.shardsB + shardsAwarded.b,
+                    c: player.shardsC + shardsAwarded.c,
+                  },
                 });
 
                 //TODO: should update Hero's Lvl in activeHeroesCache if there is a level up
@@ -343,7 +376,11 @@ export const submitRoundRoute = async (
                   winnerName: room.players.find(
                     player => player.id === winnerId,
                   )?.name,
-                  exp: dummyExp,
+                  exp: expAwarded,
+                  souls: soulsAwarded,
+                  shardsA: shardsAwarded.a,
+                  shardsB: shardsAwarded.b,
+                  shardsC: shardsAwarded.c,
                 };
               }
             }

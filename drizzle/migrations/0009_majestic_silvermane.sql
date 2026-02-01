@@ -1,0 +1,1 @@
+ALTER TABLE "item_template" ADD COLUMN "is_forgable" boolean DEFAULT false;

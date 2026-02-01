@@ -15,7 +15,7 @@ export const createRoom = async (
   try {
     const hero = await selectHero(heroId);
     if (hero) {
-      const caclStats = calculateStatsHelper(hero?.stats);
+      const caclStats = calculateStatsHelper(hero);
 
       await insertFightRoom({
         roomId,

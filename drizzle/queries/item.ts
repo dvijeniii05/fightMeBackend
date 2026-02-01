@@ -1,4 +1,10 @@
+import {
+  isEnoughShards,
+  calculateShardDeductions,
+  isForgeSuccess,
+} from "../../helpers/forgeHelpers";
 import { db } from "../db";
+import { heroSxma } from "../schema/hero";
 import { itemTemplateSxma, itemInstanceSxma } from "../schema/item";
 import { randomUUIDv7 } from "bun";
 import { and, eq } from "drizzle-orm";
@@ -88,4 +94,67 @@ export const getHeroItems = async (ownerId: string) => {
     .select()
     .from(itemInstanceSxma)
     .where(eq(itemInstanceSxma.ownerId, ownerId));
+};
+
+export const forgeItemInstance = async (heroId: string, itemId: string) => {
+  return await db.transaction(async tx => {
+    // Get the item instance with its template
+    const itemInstance = await tx.query.itemInstanceSxma.findFirst({
+      where: and(
+        eq(itemInstanceSxma.id, itemId),
+        eq(itemInstanceSxma.ownerId, heroId),
+      ),
+      with: {
+        template: true,
+      },
+    });
+
+    const heroData = await tx.query.heroSxma.findFirst({
+      where: eq(heroSxma.id, heroId),
+    });
+
+    if (!itemInstance || !heroData) {
+      throw new Error("Item not found or does not belong to this hero");
+    }
+
+    // Check if item is forgeable
+    if (!itemInstance.template.isForgable) {
+      throw new Error("This item cannot be forged");
+    }
+
+    // Check if already at max forge level
+    const currentForgeLevel = itemInstance.forgeLevel ?? 0;
+    if (currentForgeLevel >= 8) {
+      throw new Error("Item is already at maximum forge level");
+    }
+
+    // Check if forge levels exist for this item
+    if (!itemInstance.template.forgeLevels) {
+      throw new Error("Item template has no forge levels defined");
+    }
+
+    if (!isEnoughShards(itemInstance, heroData)) {
+      throw new Error("Not enough shards to forge the item");
+    }
+
+    const wasForgeSuccessful = isForgeSuccess(
+      itemInstance.template.forgeLevels[currentForgeLevel + 1].successRate,
+    );
+
+    // Increment the item instance forge level
+    const [forgedItem] = await tx
+      .update(itemInstanceSxma)
+      .set({
+        forgeLevel: wasForgeSuccessful
+          ? currentForgeLevel + 1
+          : currentForgeLevel,
+      })
+      .where(eq(itemInstanceSxma.id, itemId))
+      .returning();
+
+    // Deduct shards based on forge cost
+    const updatedShards = calculateShardDeductions(itemInstance, heroData);
+    await tx.update(heroSxma).set(updatedShards).where(eq(heroSxma.id, heroId));
+    return forgedItem;
+  });
 };

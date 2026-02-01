@@ -1,0 +1,1 @@
+ALTER TABLE "fight_room" ADD COLUMN "shards_type" smallint DEFAULT 0;

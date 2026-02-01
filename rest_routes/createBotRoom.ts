@@ -7,17 +7,21 @@ export const createBotRoom = async (
   req: BunRequest<"/fight/createBotRoom/:heroId/:botId">,
 ) => {
   const { heroId, botId } = req.params;
-  const roomId = randomUUIDv7();
-  console.log("CREATE_BOT_ROOM_FUNC", heroId);
+  const url = new URL(req.url);
+  const isDungeon = url.searchParams.get("isDungeon") === "true";
+  const shardsType = url.searchParams.get("shardsType");
+  // const shardsType = shardsTypeParam ? parseInt(shardsTypeParam) : 0;
 
+  const roomId = randomUUIDv7();
+  console.log("CREATE_BOT_ROOM_FUNC", heroId, shardsType);
   //TODO: same user cannot have multiple fightRooms active!!!
 
   try {
     const hero = await selectHero(heroId);
     const bot = await copyBotForFight(botId, roomId);
     if (hero && bot) {
-      const caclStats = calculateStatsHelper(hero?.stats);
-      const calcBotStats = calculateStatsHelper(bot?.stats);
+      const caclStats = calculateStatsHelper(hero);
+      const calcBotStats = calculateStatsHelper(bot);
 
       await insertFightRoom({
         roomId,
@@ -27,6 +31,8 @@ export const createBotRoom = async (
         playerTwo: botId,
         createdAt: Date.now(),
         isPvp: false,
+        isDungeon: isDungeon,
+        shardsType: shardsType,
       });
       console.log(`Room ${roomId} created`);
       return Response.json({ roomId: roomId }, { status: 200 });

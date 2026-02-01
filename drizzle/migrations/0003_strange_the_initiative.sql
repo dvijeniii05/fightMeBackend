@@ -1,0 +1,1 @@
+ALTER TABLE "fight_room" ADD COLUMN "is_dungeon" boolean DEFAULT false;

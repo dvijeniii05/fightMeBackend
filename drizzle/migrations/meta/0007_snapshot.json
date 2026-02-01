@@ -1,0 +1,509 @@
+{
+  "id": "a8f47b46-3f43-43f7-99c9-525dba4e0a9c",
+  "prevId": "7dfc9717-9526-4e07-9cc6-56eeb877c6b1",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.fight_room": {
+      "name": "fight_room",
+      "schema": "",
+      "columns": {
+        "room_id": {
+          "name": "room_id",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "player1_stats": {
+          "name": "player1_stats",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "player2_stats": {
+          "name": "player2_stats",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "player_one": {
+          "name": "player_one",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_two": {
+          "name": "player_two",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "history": {
+          "name": "history",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_finished": {
+          "name": "is_finished",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "is_pvp": {
+          "name": "is_pvp",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": true
+        },
+        "is_dungeon": {
+          "name": "is_dungeon",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "shards_type": {
+          "name": "shards_type",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'a'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fight_room_player_one_hero_id_fk": {
+          "name": "fight_room_player_one_hero_id_fk",
+          "tableFrom": "fight_room",
+          "tableTo": "hero",
+          "columnsFrom": [
+            "player_one"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "fight_room_player_two_hero_id_fk": {
+          "name": "fight_room_player_two_hero_id_fk",
+          "tableFrom": "fight_room",
+          "tableTo": "hero",
+          "columnsFrom": [
+            "player_two"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "fight_room_room_id_unique": {
+          "name": "fight_room_room_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "room_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.hero": {
+      "name": "hero",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nickname": {
+          "name": "nickname",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "location": {
+          "name": "location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "born": {
+          "name": "born",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lvl": {
+          "name": "lvl",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "clan": {
+          "name": "clan",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "''"
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'hero'"
+        },
+        "exp": {
+          "name": "exp",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "available_points": {
+          "name": "available_points",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "is_dupe": {
+          "name": "is_dupe",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "souls": {
+          "name": "souls",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "shards_a": {
+          "name": "shards_a",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "shards_b": {
+          "name": "shards_b",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "shards_c": {
+          "name": "shards_c",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "hero_id_unique": {
+          "name": "hero_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id"
+          ]
+        },
+        "hero_nickname_unique": {
+          "name": "hero_nickname_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "nickname"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.stats": {
+      "name": "stats",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "strength": {
+          "name": "strength",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 5
+        },
+        "mastery": {
+          "name": "mastery",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 5
+        },
+        "agility": {
+          "name": "agility",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 5
+        },
+        "health": {
+          "name": "health",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 5
+        },
+        "knowledge": {
+          "name": "knowledge",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 5
+        },
+        "current_hp": {
+          "name": "current_hp",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "stats_owner_id_hero_id_fk": {
+          "name": "stats_owner_id_hero_id_fk",
+          "tableFrom": "stats",
+          "tableTo": "hero",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "stats_owner_id_unique": {
+          "name": "stats_owner_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "owner_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.item_instance": {
+      "name": "item_instance",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "template_id": {
+          "name": "template_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "equipped": {
+          "name": "equipped",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "equip_slot": {
+          "name": "equip_slot",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "item_instance_template_id_item_template_id_fk": {
+          "name": "item_instance_template_id_item_template_id_fk",
+          "tableFrom": "item_instance",
+          "tableTo": "item_template",
+          "columnsFrom": [
+            "template_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "item_instance_owner_id_hero_id_fk": {
+          "name": "item_instance_owner_id_hero_id_fk",
+          "tableFrom": "item_instance",
+          "tableTo": "hero",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "item_instance_id_unique": {
+          "name": "item_instance_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.item_template": {
+      "name": "item_template",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rarity": {
+          "name": "rarity",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "base_stats": {
+          "name": "base_stats",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "requirements": {
+          "name": "requirements",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "price": {
+          "name": "price",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "stackable": {
+          "name": "stackable",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "slots": {
+          "name": "slots",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

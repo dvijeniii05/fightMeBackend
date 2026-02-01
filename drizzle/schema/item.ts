@@ -11,18 +11,41 @@ import {
 } from "drizzle-orm/pg-core";
 import { heroSxma } from "./hero";
 
+type itemStatsType = {
+  hp?: number;
+  damage?: number;
+  attackArea?: number;
+  blockArea?: number;
+  critChance?: number;
+  critMultiplier?: number;
+  evadeChance?: number;
+  fastChance?: number;
+  skillCritChance?: number;
+  //TODO: add more stats specific to gear + awakenings?
+};
+
+type forgeRequirementsType = {
+  cost: number; // cost in shards
+  costType: string; // type of shards (A, B, C)
+  successRate: number; // percentage chance of success
+};
+
 export const itemTemplateSxma = pgTable("item_template", {
   id: serial("id").primaryKey(),
   name: varchar("name").notNull(),
   type: varchar("type").notNull(), // "weapon", "armor", "consumable" TODO: change to numbers
   rarity: varchar("rarity").notNull(), // "common", "rare", "epic", "legendary" TODO: change to numbers
-  baseStats: jsonb("base_stats"), // { damage: 10, .... }
+  baseStats: jsonb("base_stats").$type<itemStatsType>(), // { damage: 10, .... }
   requirements: jsonb("requirements"), // { level: 15, strength: 20 }
   description: text("description"),
   imageUrl: varchar("image_url"),
   price: integer("price").default(0),
   stackable: boolean("stackable").default(false),
   slots: jsonb("slots").$type<number[]>().notNull().default([]), // for armor
+  isForgable: boolean("is_forgable").default(false),
+  forgeLevels: jsonb("forge_levels").$type<{
+    [level: number]: itemStatsType & forgeRequirementsType;
+  }>(), // number of times item can be forged
 });
 
 export const itemInstanceSxma = pgTable("item_instance", {
@@ -41,6 +64,7 @@ export const itemInstanceSxma = pgTable("item_instance", {
   // socketedGems: jsonb("socketed_gems").default([]), // Array of gem IDs
   // customStats: jsonb("custom_stats"), // Any bonus stats from enchanting
 
+  forgeLevel: smallint("forge_level").default(0), // Current forge level
   // Inventory management
   equipped: boolean("equipped").default(false),
   equipSlot: smallint("equip_slot"), //  1 to 6 (left to right)
@@ -64,3 +88,9 @@ export const itemInstanceRelations = relations(itemInstanceSxma, ({ one }) => ({
     references: [heroSxma.id],
   }),
 }));
+
+export type SelectItemInstance = typeof itemInstanceSxma.$inferSelect;
+export type SelectItemTemplate = typeof itemTemplateSxma.$inferSelect;
+export type SelectFullItem = typeof itemInstanceSxma.$inferSelect & {
+  template: typeof itemTemplateSxma.$inferSelect;
+};

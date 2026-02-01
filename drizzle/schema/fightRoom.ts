@@ -5,6 +5,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  smallint,
   varchar,
 } from "drizzle-orm/pg-core";
 import { heroSxma } from "./hero";
@@ -25,6 +26,8 @@ export const fightRoomSxma = pgTable("fight_room", {
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
   isFinished: boolean("is_finished").default(false),
   isPvp: boolean("is_pvp").default(true),
+  isDungeon: boolean("is_dungeon").default(false),
+  shardsType: varchar("shards_type").default("a"), // a, b, c and so on for rarity where  a = greenForge, b = blueForge, c = purpleForge
 });
 
 export const fightRoomRelations = relations(fightRoomSxma, ({ one }) => ({

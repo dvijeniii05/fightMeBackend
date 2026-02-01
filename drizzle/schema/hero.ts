@@ -22,6 +22,12 @@ export const heroSxma = pgTable("hero", {
   exp: integer("exp").default(0).notNull(),
   statsPoints: smallint("available_points").default(0).notNull(), //linked to lvl up
   isDupe: boolean("is_dupe").default(false).notNull(), // to mark if hero is a copied bot
+  souls: integer("souls").default(0).notNull(), //main currency
+  //resource for enhancing/forging items
+  // shards split into A, B, C types and so on to differentiate rarity
+  shardsA: integer("shards_a").default(0).notNull(),
+  shardsB: integer("shards_b").default(0).notNull(),
+  shardsC: integer("shards_c").default(0).notNull(),
 });
 
 export const statsSxma = pgTable("stats", {

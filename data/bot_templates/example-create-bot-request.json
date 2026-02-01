@@ -1,0 +1,37 @@
+{
+  "nickname": "Knight",
+  "stats": {
+    "strength": 10,
+    "mastery": 10,
+    "agility": 10,
+    "health": 10,
+    "knowledge": 10
+  },
+  "lvl": 5,
+  "items": [
+    {
+      "templateId": 1,
+      "equipSlot": 1
+    },
+    {
+      "templateId": 1,
+      "equipSlot": 3
+    },
+    {
+      "templateId": 2,
+      "equipSlot": 2
+    },
+    {
+      "templateId": 3,
+      "equipSlot": 4
+    },
+    {
+      "templateId": 3,
+      "equipSlot": 6
+    },
+    {
+      "templateId": 4,
+      "equipSlot": 5
+    }
+  ]
+}

@@ -12,7 +12,7 @@ export const updateHeroStatsRoute = async (
 
     await updateHeroStats(body);
     console.log(`Update Hero stats with heroId: ${body.ownerId}`);
-    const { hp: maxHp } = calculateStatsHelper(body);
+    const { hp: maxHp } = calculateStatsHelper({ stats: body });
     activeHeroesCache.set(body.ownerId, {
       ...activeHeroesCache.get(body.ownerId)!,
       maxHp: maxHp,

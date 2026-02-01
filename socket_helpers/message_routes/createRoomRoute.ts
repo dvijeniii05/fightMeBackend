@@ -23,7 +23,7 @@ export const createRoomRoute = async (
     const hero = await selectHero(parsedMessage.heroId);
     console.log("Hero", hero);
     if (hero) {
-      const { hp: calcHp, ...calcStats } = calculateStatsHelper(hero?.stats);
+      const { hp: calcHp, ...calcStats } = calculateStatsHelper(hero);
       console.log("CALC_STATS", calcStats);
 
       const room: RoomType = {

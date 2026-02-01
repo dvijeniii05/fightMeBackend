@@ -1,3 +1,5 @@
+import type { InventoryItemType } from "../types/itemsType";
+
 const dummy = {
   strength: 10,
   mastery: 10,
@@ -40,14 +42,70 @@ export interface CalculatedStatsProps {
 }
 
 //TODO:  should calculate health + default damage + cirt chance + crit mult + evasions chance + 2x damage chance etc
+export const totalGearStats = (
+  heroItems: InventoryItemType[],
+): GearStatsProps => {
+  const equippedItems = heroItems.filter(item => item.equipped === true);
+  const totalGearStats = equippedItems.reduce(
+    (acc, item) => {
+      if (
+        !item.template.baseStats ||
+        typeof item.template.baseStats !== "object"
+      )
+        return acc;
+      const stats = item.template.baseStats as any;
+      return {
+        hp: acc.hp + (stats.hp || 0),
+        damage: acc.damage + (stats.damage || 0),
+        attackArea: acc.attackArea + (stats.attackArea || 0),
+        blockArea: acc.blockArea + (stats.blockArea || 0),
+        critChance: acc.critChance + (stats.critChance || 0),
+        critMultiplier: acc.critMultiplier + (stats.critMultiplier || 0),
+        evadeChance: acc.evadeChance + (stats.evadeChance || 0),
+        fastChance: acc.fastChance + (stats.fastChance || 0),
+        skillCritChance: acc.skillCritChance + (stats.skillCritChance || 0),
+      };
+    },
+    {
+      hp: 0,
+      damage: 0,
+      attackArea: 0,
+      blockArea: 0,
+      critChance: 0,
+      critMultiplier: 0,
+      evadeChance: 0,
+      fastChance: 0,
+      skillCritChance: 0,
+    },
+  );
+  return totalGearStats;
+};
+
+export type HeroWithRelations = {
+  stats: StatsProps;
+  items?: InventoryItemType[];
+};
 
 // !! IMPORTANT: create a private npm package for shared calculation engine between client and server
 export const calculateStatsHelper = (
-  stats: StatsProps,
-  gearStats: GearStatsProps,
+  hero: HeroWithRelations,
 ): CalculatedStatsProps => {
+  const stats = hero.stats;
+  const gearStats = hero.items
+    ? totalGearStats(hero.items)
+    : {
+        hp: 0,
+        damage: 0,
+        attackArea: 0,
+        blockArea: 0,
+        critChance: 0,
+        critMultiplier: 0,
+        evadeChance: 0,
+        fastChance: 0,
+        skillCritChance: 0,
+      };
+
   const capped = (val: number) => Math.min(100, Math.max(0, val)); // Enforce 0–100
-  //TODO: should include stats & buffs calc from gear & weapon
 
   const strength = capped(stats.strength);
   const mastery = capped(stats.mastery);

@@ -20,6 +20,10 @@ type Player = {
   lvl: number;
   exp: number;
   statsPoints: number;
+  souls: number;
+  shardsA: number;
+  shardsB: number;
+  shardsC: number;
 };
 
 export type Round = {
@@ -72,6 +76,10 @@ export type RoomType = {
     winnerId?: string;
     winnerName?: string;
     exp?: number;
+    souls?: number;
+    shardsA?: number;
+    shardsB?: number;
+    shardsC?: number;
   };
 
   creator: {
@@ -85,6 +93,8 @@ export type RoomType = {
   players: Player[];
   rounds: Round[]; //New roudn is always added as 0 index el into this array
   isPvp: boolean;
+  isDungeon?: boolean;
+  shardsType?: string; //  a = greenForge, b = blueForge, c = purpleForge
 };
 
 export type UserRoomType = {

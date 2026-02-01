@@ -16,7 +16,7 @@ export const activeHeroesRoute = async (
     if (!activeHeroesCache.has(parsedMessage.heroId)) {
       const hero = await selectHero(parsedMessage.heroId);
       if (hero) {
-        const { hp: maxHp } = calculateStatsHelper(hero?.stats);
+        const { hp: maxHp } = calculateStatsHelper(hero);
 
         //NOTE: eveyrtime we update user stats, we need to update the activeHeroesCache too to keep Hp in sync
 

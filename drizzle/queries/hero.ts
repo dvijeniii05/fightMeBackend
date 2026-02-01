@@ -55,6 +55,11 @@ export const selectAllUniqueBots = async () => {
     where: and(eq(heroSxma.type, "bot"), eq(heroSxma.isDupe, false)),
     with: {
       stats: true,
+      items: {
+        with: {
+          template: true,
+        },
+      },
     },
   });
 
@@ -115,7 +120,7 @@ export const copyBotForFight = async (botId: string, roomId: string) => {
         ownerId: newBotId,
         equipped: item.equipped,
         equipSlot: item.equipSlot,
-        id: item.id, // keep the same id as original item
+        id: `${item.id}_${roomId}`, // keep the same id as original item
       }));
 
       await tx.insert(itemInstanceSxma).values(itemsToInsert);
@@ -137,10 +142,29 @@ export const updateHeroAfterFight = async (data: {
   exp: number;
   lvl: number;
   statsPoints: number;
+  souls: number;
+  shards?: {
+    a: number;
+    b: number;
+    c: number;
+  };
 }) => {
+  const newShards = data.shards
+    ? {
+        shardsA: data.shards.a,
+        shardsB: data.shards.b,
+        shardsC: data.shards.c,
+      }
+    : {};
   const updatedHero = await db
     .update(heroSxma)
-    .set({ exp: data.exp, lvl: data.lvl, statsPoints: data.statsPoints })
+    .set({
+      exp: data.exp,
+      lvl: data.lvl,
+      statsPoints: data.statsPoints,
+      souls: data.souls,
+      ...newShards,
+    })
     .where(eq(heroSxma.id, data.heroId));
 
   return updatedHero;

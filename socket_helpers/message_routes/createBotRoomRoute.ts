@@ -1,4 +1,5 @@
 import { selectHero } from "../../drizzle/queries/hero";
+import { selectFightRoom } from "../../drizzle/queries/fightRoom";
 import { calculateStatsHelper } from "../../helpers/calculateStatsHelper";
 import type { RoomType } from "../../types/roomType";
 import { fightRoomsCache, userRoomsCache } from "../socketCache";
@@ -25,12 +26,11 @@ export const createBotRoomRoute = async (
     const bot = await selectHero(
       parsedMessage.botId + "-" + parsedMessage.roomId,
     ); // Bot ID with suffix
+    const fightRoom = await selectFightRoom(parsedMessage.roomId);
     console.log("Hero AND Bot", hero, bot);
-    if (hero && bot) {
-      const { hp: calcHp, ...calcStats } = calculateStatsHelper(hero?.stats);
-      const { hp: calcBotHp, ...calcBotStats } = calculateStatsHelper(
-        bot?.stats,
-      );
+    if (hero && bot && fightRoom) {
+      const { hp: calcHp, ...calcStats } = calculateStatsHelper(hero);
+      const { hp: calcBotHp, ...calcBotStats } = calculateStatsHelper(bot);
       console.log("CALC_STATS", calcStats);
 
       const room: RoomType = {
@@ -59,6 +59,10 @@ export const createBotRoomRoute = async (
             lvl: hero.lvl,
             exp: hero.exp,
             statsPoints: hero.statsPoints,
+            souls: hero.souls ?? 0,
+            shardsA: hero.shardsA ?? 0,
+            shardsB: hero.shardsB ?? 0,
+            shardsC: hero.shardsC ?? 0,
           },
           {
             id: bot.id,
@@ -74,9 +78,15 @@ export const createBotRoomRoute = async (
             lvl: bot.lvl,
             exp: bot.exp,
             statsPoints: bot.statsPoints,
+            souls: 0,
+            shardsA: 0,
+            shardsB: 0,
+            shardsC: 0,
           },
         ],
         isPvp: false,
+        isDungeon: fightRoom.isDungeon ?? false,
+        shardsType: fightRoom.shardsType ?? "",
         rounds: [],
       };
 
