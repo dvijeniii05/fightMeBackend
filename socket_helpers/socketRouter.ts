@@ -1,5 +1,5 @@
 import { activeHeroesRoute } from "./message_routes/activeHeroesRoute";
-import { activeRoomsRoute } from "./message_routes/activeRoomsRoute";
+import { activeFightRoomsRoute } from "./message_routes/activeFightRoomsRoute";
 import { createBotRoomRoute } from "./message_routes/createBotRoomRoute";
 import { createRoomRoute } from "./message_routes/createRoomRoute";
 import { currentHpRoute } from "./message_routes/currentHpRoute";
@@ -22,8 +22,8 @@ export const messageRouter = async (
       return joinRoomRoute(server, ws, rest);
     case "createBotRoom":
       return createBotRoomRoute(server, ws, rest);
-    case "activeRooms":
-      return activeRoomsRoute(ws);
+    case "activeFightRooms":
+      return activeFightRoomsRoute(ws);
     case "submitRound":
       return await submitRoundRoute(server, ws, rest);
     case "activeHeroes":

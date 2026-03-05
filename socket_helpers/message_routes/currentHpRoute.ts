@@ -21,7 +21,7 @@ export const currentHpRoute = async (
           console.log("IN_INTERVAL_REGEN");
           //TODO: this logic needs to include a calculated hpRegenRate that should be added instead of static 15
           //calculate & init. live hp daemon
-          hero.currHp = Math.min(hero.currHp + 100, hero.maxHp);
+          hero.currHp = Math.round(Math.min(hero.currHp + 100, hero.maxHp));
           ws.send(
             JSON.stringify({
               type: "current_hp",

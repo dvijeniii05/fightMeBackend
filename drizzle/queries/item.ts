@@ -45,6 +45,63 @@ export const createItemInstance = async (
     .returning();
 };
 
+export const buyItemInstance = async (
+  heroId: string,
+  templateId: number,
+  options?: {
+    equipped?: boolean;
+    equipSlot?: number;
+  },
+) => {
+  return await db.transaction(async tx => {
+    // Get the item template to check the price
+    const itemTemplate = await tx.query.itemTemplateSxma.findFirst({
+      where: eq(itemTemplateSxma.id, templateId),
+    });
+
+    // Get the hero to check souls
+    const hero = await tx.query.heroSxma.findFirst({
+      where: eq(heroSxma.id, heroId),
+    });
+
+    if (!itemTemplate) {
+      throw new Error("Item template not found");
+    }
+
+    if (!hero) {
+      throw new Error("Hero not found");
+    }
+
+    // Check if hero has enough souls
+    const itemPrice = itemTemplate.price ?? 0;
+    if (hero.souls < itemPrice) {
+      throw new Error("Not enough souls to purchase this item");
+    }
+
+    // Create the item instance
+    const [newItem] = await tx
+      .insert(itemInstanceSxma)
+      .values({
+        id: randomUUIDv7(),
+        templateId,
+        ownerId: heroId,
+        equipped: options?.equipped ?? false,
+        equipSlot: options?.equipSlot,
+      })
+      .returning();
+
+    // Deduct souls from hero
+    await tx
+      .update(heroSxma)
+      .set({
+        souls: hero.souls - itemPrice,
+      })
+      .where(eq(heroSxma.id, heroId));
+
+    return newItem;
+  });
+};
+
 export const toggleItemEquipped = async (
   ownerId: string,
   itemId: string,
@@ -155,6 +212,9 @@ export const forgeItemInstance = async (heroId: string, itemId: string) => {
     // Deduct shards based on forge cost
     const updatedShards = calculateShardDeductions(itemInstance, heroData);
     await tx.update(heroSxma).set(updatedShards).where(eq(heroSxma.id, heroId));
-    return forgedItem;
+    return {
+      item: forgedItem,
+      wasForgeSuccess: wasForgeSuccessful,
+    };
   });
 };

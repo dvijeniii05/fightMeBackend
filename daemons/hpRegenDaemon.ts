@@ -11,7 +11,7 @@ export const hpRegenDaemon = (server: Bun.Server) => {
   setInterval(() => {
     for (const [_, stats] of activeHeroesCache.entries()) {
       if (stats.currHp < stats.maxHp) {
-        stats.currHp = Math.min(stats.currHp + 30, stats.maxHp);
+        stats.currHp = Math.round(Math.min(stats.currHp + 30, stats.maxHp));
         //TODO: will need to update store values for activeHp here
       }
     }

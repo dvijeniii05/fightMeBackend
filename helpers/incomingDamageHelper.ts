@@ -28,7 +28,11 @@ export const incomingDamageHelper = (props: Props) => {
 
   //Full damage as no block involved
   if (overlap === 0)
-    return { damage: props.incomingDamage, block: "0%", isBlocked: false };
+    return {
+      damage: Math.round(props.incomingDamage),
+      block: "0%",
+      isBlocked: false,
+    };
 
   const blockPercentage = overlap / attackArea;
 

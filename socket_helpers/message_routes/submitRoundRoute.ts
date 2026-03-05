@@ -308,10 +308,7 @@ export const submitRoundRoute = async (
                 currHp: player.hp,
               });
 
-              // await updateHeroCurrHp({
-              //   heroId: bot.id,
-              //   currHp: bot.hp,
-              // });
+              await deleteCopiedBot(bot.id);
 
               if (isResulDraw) {
                 //it is a draw
@@ -368,8 +365,9 @@ export const submitRoundRoute = async (
 
                 console.log("DELETING_BOT...", bot);
 
-                await deleteCopiedBot(bot.id);
-
+                //TODO: save the outcome into a separate match history table in DB including both player and bot stats, picks, and the outcome details such as damage dealt, exp awarded etc. This is needed for analytics and also for the player to be able to see their past matches history and details
+                //AND delete this from the socked cache once saved in DB to free up memory
+                //Should run as a daemon i.e. a scheduled function that runs every X minutes and deletes ONLY finished matches from the cache that are already saved in DB AND with a timestamp of at least 5 minutes from the "finsihed status"
                 room.matchResult = {
                   isDraw: false,
                   winnerId: winnerId,
@@ -408,6 +406,7 @@ export const submitRoundRoute = async (
         "ERROR: submirRoundRoute for heroId ==> %s and roomId ==> %s ",
         parsedMessage.heroId,
         activePlayerRoomId,
+        err,
       );
     }
   } else {

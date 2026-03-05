@@ -38,22 +38,24 @@ export const calculateDamageHelper = (to: any, from: any) => {
     }).length > 0;
   console.log("IS_BLOCKED?", isGoodBlock);
 
-  const rawDamage = potentialTotalDamage();
+  const rawDamage = Math.round(potentialTotalDamage());
   console.log("rawDamage", rawDamage);
   const afterBlockDamage = isGoodBlock ? rawDamage - blockDamage : rawDamage;
   const finalTotalDamage = isItEvaded
     ? 0
     : afterBlockDamage < 0
-    ? 0
-    : afterBlockDamage;
-  const calcualtedOrigHealth = to.stats.health * 100 + to.buffs.addHealth;
+      ? 0
+      : Math.round(afterBlockDamage);
+  const calcualtedOrigHealth = Math.round(
+    to.stats.health * 100 + to.buffs.addHealth,
+  );
 
   return {
-    damage: finalTotalDamage,
+    damage: Math.round(finalTotalDamage),
     isGoodBlock,
     isItCrit,
     isItEvaded,
-    healthLeft: to.healthLeft - finalTotalDamage,
+    healthLeft: Math.round(to.healthLeft - finalTotalDamage),
     originalHealth: calcualtedOrigHealth,
   };
 };
@@ -96,10 +98,12 @@ export const calculateRoundOutcome = (
     max: Math.min(B.blockTime + B.blockArea, 200),
   };
 
-  const potentialDamageA =
-    A.baseDamageBoost * (isCritA ? A.critMultiplier : 1) * (isFastA ? 2.5 : 1);
-  const potentialDamageB =
-    B.baseDamageBoost * (isCritB ? B.critMultiplier : 1) * (isFastB ? 2.5 : 1);
+  const potentialDamageA = Math.round(
+    A.baseDamageBoost * (isCritA ? A.critMultiplier : 1) * (isFastA ? 2.5 : 1),
+  );
+  const potentialDamageB = Math.round(
+    B.baseDamageBoost * (isCritB ? B.critMultiplier : 1) * (isFastB ? 2.5 : 1),
+  );
 
   //Below relates to block calculation. Is it blocked? If yes, then what is the amount.
   //If block covers 50%+ of attackArea then 0 damage is dealt
@@ -116,8 +120,12 @@ export const calculateRoundOutcome = (
     incomingDamage: potentialDamageA,
   });
 
-  const hpLeftA = Math.max(0, A.hp - (isEvadeA ? 0 : incomingDamageA.damage));
-  const hpLeftB = Math.max(0, B.hp - (isEvadeB ? 0 : incomingDamageB.damage));
+  const hpLeftA = Math.round(
+    Math.max(0, A.hp - (isEvadeA ? 0 : incomingDamageA.damage)),
+  );
+  const hpLeftB = Math.round(
+    Math.max(0, B.hp - (isEvadeB ? 0 : incomingDamageB.damage)),
+  );
 
   return {
     playerOne: {

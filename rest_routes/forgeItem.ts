@@ -10,13 +10,13 @@ export const forgeItem = async (
       itemId: string;
     };
     console.log("FORGE_ITEM_REQUEST", { heroId, itemId });
-    const forgedItem = await forgeItemInstance(heroId, itemId);
-
+    const { item, wasForgeSuccess } = await forgeItemInstance(heroId, itemId);
+    console.log("FORGE_ITEM_RESULT", { item, wasForgeSuccess });
     return Response.json(
       {
-        success: true,
-        forgedItem,
-        message: `Item forged to level ${forgedItem.forgeLevel}`,
+        hasFailed: !wasForgeSuccess,
+        item,
+        message: `Item forged to level ${item.forgeLevel}`,
       },
       { status: 200 },
     );
@@ -28,7 +28,7 @@ export const forgeItem = async (
 
     return Response.json(
       {
-        success: false,
+        hasFailed: true,
         message: `ERROR: ${errorMessage}`,
       },
       { status: 500 },

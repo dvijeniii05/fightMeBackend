@@ -71,6 +71,13 @@
       "when": 1768851946938,
       "tag": "0009_majestic_silvermane",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1771440938587,
+      "tag": "0010_common_thena",
+      "breakpoints": true
     }
   ]
 }

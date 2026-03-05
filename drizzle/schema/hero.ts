@@ -1,34 +1,43 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   integer,
   pgTable,
   serial,
   smallint,
   text,
+  uniqueIndex,
   varchar,
   boolean,
 } from "drizzle-orm/pg-core";
 import { fightRoomSxma } from "./fightRoom";
 import { itemInstanceSxma } from "./item";
 
-export const heroSxma = pgTable("hero", {
-  id: varchar("id").primaryKey().unique().notNull(),
-  nickname: varchar("nickname").notNull().unique(),
-  location: text("location"), // upd to match current location
-  born: text("born"), // would this be needed??
-  lvl: smallint("lvl").default(1).notNull(),
-  clan: varchar("clan").default(""), // ref to Clan Sxma
-  type: varchar("type").default("hero"), // hero or bot
-  exp: integer("exp").default(0).notNull(),
-  statsPoints: smallint("available_points").default(0).notNull(), //linked to lvl up
-  isDupe: boolean("is_dupe").default(false).notNull(), // to mark if hero is a copied bot
-  souls: integer("souls").default(0).notNull(), //main currency
-  //resource for enhancing/forging items
-  // shards split into A, B, C types and so on to differentiate rarity
-  shardsA: integer("shards_a").default(0).notNull(),
-  shardsB: integer("shards_b").default(0).notNull(),
-  shardsC: integer("shards_c").default(0).notNull(),
-});
+export const heroSxma = pgTable(
+  "hero",
+  {
+    id: varchar("id").primaryKey().unique().notNull(),
+    nickname: varchar("nickname").notNull(),
+    location: text("location"), // upd to match current location
+    born: text("born"), // would this be needed??
+    lvl: smallint("lvl").default(1).notNull(),
+    clan: varchar("clan").default(""), // ref to Clan Sxma
+    type: varchar("type").default("hero"), // hero or bot
+    exp: integer("exp").default(0).notNull(),
+    statsPoints: smallint("available_points").default(0).notNull(), //linked to lvl up
+    isDupe: boolean("is_dupe").default(false).notNull(), // to mark if hero is a copied bot
+    souls: integer("souls").default(0).notNull(), //main currency
+    //resource for enhancing/forging items
+    // shards split into A, B, C types and so on to differentiate rarity
+    shardsA: integer("shards_a").default(0).notNull(),
+    shardsB: integer("shards_b").default(0).notNull(),
+    shardsC: integer("shards_c").default(0).notNull(),
+  },
+  table => [
+    uniqueIndex("nickname_unique_idx")
+      .on(table.nickname)
+      .where(sql`${table.isDupe} = false`),
+  ],
+);
 
 export const statsSxma = pgTable("stats", {
   id: serial("id").primaryKey(),

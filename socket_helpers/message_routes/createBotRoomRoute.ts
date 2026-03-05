@@ -42,6 +42,7 @@ export const createBotRoomRoute = async (
         creator: {
           heroId: parsedMessage.heroId,
           nickname: hero.nickname,
+          level: hero.lvl,
         },
         currentRound: 1,
         players: [
@@ -63,6 +64,7 @@ export const createBotRoomRoute = async (
             shardsA: hero.shardsA ?? 0,
             shardsB: hero.shardsB ?? 0,
             shardsC: hero.shardsC ?? 0,
+            items: hero.items.filter(item => item.equipped) ?? [],
           },
           {
             id: bot.id,
@@ -82,6 +84,7 @@ export const createBotRoomRoute = async (
             shardsA: 0,
             shardsB: 0,
             shardsC: 0,
+            items: bot.items ?? [],
           },
         ],
         isPvp: false,
@@ -108,12 +111,12 @@ export const createBotRoomRoute = async (
         }),
       );
 
-      const roomsArray = Array.from(userRoomsCache.values());
+      const roomsArray = Array.from(fightRoomsCache.values());
 
       server.publish(
         topic.activeFightRooms,
         JSON.stringify({
-          type: "all_active_rooms",
+          type: topic.activeFightRooms,
           rooms: roomsArray,
         }),
       );

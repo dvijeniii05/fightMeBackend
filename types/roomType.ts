@@ -1,3 +1,5 @@
+import type { InventoryItemType } from "./itemsType";
+
 type Player = {
   id: string;
   name: string;
@@ -24,6 +26,7 @@ type Player = {
   shardsA: number;
   shardsB: number;
   shardsC: number;
+  items: InventoryItemType[];
 };
 
 export type Round = {
@@ -85,7 +88,8 @@ export type RoomType = {
   creator: {
     heroId: string;
     nickname: string;
-    //Should include more yser data such as level, maybe some stats
+    level: number;
+    //Should include more user data such as level, maybe some stats
   };
 
   currentRound: number;
@@ -100,4 +104,7 @@ export type RoomType = {
 export type UserRoomType = {
   id: string;
   isPvp: boolean;
+  heroName?: string;
+  heroLvl?: number;
+  heroId?: string;
 };

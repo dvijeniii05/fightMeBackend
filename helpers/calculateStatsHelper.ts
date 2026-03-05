@@ -113,13 +113,15 @@ export const calculateStatsHelper = (
   const health = capped(stats.health);
   const knowledge = capped(stats.knowledge);
 
-  const baseDamageBoost =
-    Math.round(strength * 1.5 * 10) / 10 + gearStats.damage;
-  const attackArea =
-    Math.round(strength * 0.01 * 10) / 10 + gearStats.attackArea;
-  const blockArea =
-    Math.round((strength * 0.1 + health * 0.1) * 10) / 10 + gearStats.blockArea;
-  const hp = Math.round(health * 100) + gearStats.hp;
+  const baseDamageBoost = Math.round(strength * 1.5 + gearStats.damage);
+  const attackArea = Math.round(strength * 0.01 + gearStats.attackArea);
+
+  //TODO: remove temp blockArea once agreed on formula for block-area
+  const tempBlockArea = 4;
+  const blockArea = Math.round(
+    strength * 0.1 + health * 0.1 + gearStats.blockArea,
+  );
+  const hp = Math.round(health * 100 + gearStats.hp);
 
   const critChance = Math.round(mastery * 0.3 * 10) / 10 + gearStats.critChance;
   const critMultiplier =
@@ -136,7 +138,7 @@ export const calculateStatsHelper = (
     hp,
     baseDamageBoost,
     attackArea,
-    blockArea,
+    blockArea: tempBlockArea,
     critChance,
     critMultiplier,
     evadeChance,

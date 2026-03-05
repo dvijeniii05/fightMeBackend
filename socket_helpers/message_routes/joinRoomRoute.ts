@@ -45,6 +45,11 @@ export const joinRoomRoute = async (
           lvl: hero.lvl,
           exp: hero.exp,
           statsPoints: hero.statsPoints,
+          items: hero.items ?? [],
+          souls: hero.souls ?? 0,
+          shardsA: hero.shardsA ?? 0,
+          shardsB: hero.shardsB ?? 0,
+          shardsC: hero.shardsC ?? 0,
           history: {
             // Need to add to Hero DB object
             win: 0,

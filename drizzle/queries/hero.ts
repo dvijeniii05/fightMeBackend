@@ -90,7 +90,7 @@ export const copyBotForFight = async (botId: string, roomId: string) => {
     // Insert new Bot with copied data
     await tx.insert(heroSxma).values({
       id: newBotId,
-      nickname: botTemplate.nickname + "SUFFIX", //TODO: add random suffix
+      nickname: botTemplate.nickname, //TODO: add random suffix
       location: botTemplate.location,
       born: botTemplate.born,
       lvl: botTemplate.lvl,
@@ -176,7 +176,7 @@ export const updateHeroCurrHp = async (data: {
 }) => {
   const updatedStats = await db
     .update(statsSxma)
-    .set({ currentHp: data.currHp })
+    .set({ currentHp: Math.round(data.currHp) })
     .where(eq(statsSxma.ownerId, data.heroId));
 
   return updatedStats;

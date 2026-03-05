@@ -35,6 +35,7 @@ export const createRoomRoute = async (
         creator: {
           heroId: parsedMessage.heroId,
           nickname: hero.nickname,
+          level: hero.lvl,
         },
         currentRound: 1,
         players: [
@@ -52,6 +53,11 @@ export const createRoomRoute = async (
             lvl: hero.lvl,
             exp: hero.exp,
             statsPoints: hero.statsPoints,
+            souls: hero.souls ?? 0,
+            shardsA: hero.shardsA ?? 0,
+            shardsB: hero.shardsB ?? 0,
+            shardsC: hero.shardsC ?? 0,
+            items: hero.items ?? [],
           },
         ],
         isPvp: true,
@@ -62,6 +68,9 @@ export const createRoomRoute = async (
       userRoomsCache.set(parsedMessage.heroId, {
         id: parsedMessage.roomId,
         isPvp: true,
+        heroName: hero.nickname,
+        heroLvl: hero.lvl,
+        heroId: parsedMessage.heroId,
       });
 
       ws.subscribe(parsedMessage.roomId);
@@ -74,12 +83,13 @@ export const createRoomRoute = async (
         }),
       );
 
-      const roomsArray = Array.from(userRoomsCache.values());
+      const roomsArray = Array.from(fightRoomsCache.values());
+      console.log("FIGHT_ROOMS_ARRAY", roomsArray);
 
       server.publish(
         topic.activeFightRooms,
         JSON.stringify({
-          type: "all_active_rooms",
+          type: topic.activeFightRooms,
           rooms: roomsArray,
         }),
       );
