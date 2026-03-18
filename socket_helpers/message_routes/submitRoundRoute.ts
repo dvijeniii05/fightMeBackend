@@ -324,9 +324,17 @@ export const submitRoundRoute = async (
                 });
               } else {
                 console.log("WE_HAVE_A_WINNER...");
+
+                //TODO: need to udapte currHp on loss as well!
+
                 //we have a winner
                 const isPlayerWinner = winnerId === player.id;
-                const expAwarded = calculateExp(isPlayerWinner, room.isDungeon);
+                const expAwarded = calculateExp(
+                  isPlayerWinner,
+                  player.lvl,
+                  bot.lvl,
+                  room.isDungeon,
+                );
                 const soulsAwarded = calculateSouls(
                   isPlayerWinner,
                   player.lvl,
@@ -360,7 +368,7 @@ export const submitRoundRoute = async (
                 });
 
                 //TODO: should update Hero's Lvl in activeHeroesCache if there is a level up
-
+                console.log("IS_LVL_UP", isLvlUp, socketHeroOne);
                 isLvlUp && socketHeroOne!.lvl++;
 
                 console.log("DELETING_BOT...", bot);
@@ -380,6 +388,9 @@ export const submitRoundRoute = async (
                   shardsB: shardsAwarded.b,
                   shardsC: shardsAwarded.c,
                 };
+
+                //TODO:  add the same should happen in PvP matches
+                userRoomsCache.delete(player.id);
               }
             }
             //create newRound

@@ -121,7 +121,7 @@ export const calculateStatsHelper = (
   const blockArea = Math.round(
     strength * 0.1 + health * 0.1 + gearStats.blockArea,
   );
-  const hp = Math.round(health * 100 + gearStats.hp);
+  const hp = Math.round(health * 10 + gearStats.hp);
 
   const critChance = Math.round(mastery * 0.3 * 10) / 10 + gearStats.critChance;
   const critMultiplier =

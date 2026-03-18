@@ -1,16 +1,21 @@
+import type {
+  itemStatsType,
+  forgeRequirementsType,
+} from "../drizzle/schema/item";
+
+//TODO: finalise Secondary Stats value for weapon forgin AND should only 1 weapon type be forgible per set?!
 export const calculateForgeLevels = (
   baseStats: Record<string, number>,
   primaryStatKey: string,
   secondaryStatKey: string,
   secondaryStatBoostPercent: number = 10, // TBC, default 10% per level
-) => {
+): { [level: number]: itemStatsType & forgeRequirementsType } => {
   const primaryBaseValue = baseStats[primaryStatKey];
   const secondaryBaseValue = baseStats[secondaryStatKey];
 
-  const forgeLevels: Record<
-    string,
-    Record<string, number | string[] | undefined | string>
-  > = {};
+  const forgeLevels: {
+    [level: number]: itemStatsType & forgeRequirementsType;
+  } = {};
 
   // Define shard costs, types, and success rates based on game mechanics
   const shardData = [
@@ -28,7 +33,7 @@ export const calculateForgeLevels = (
 
   // Levels 0-6: Primary stat +10% per level
   for (let level = 0; level <= 6; level++) {
-    forgeLevels[level.toString()] = {
+    forgeLevels[level] = {
       [primaryStatKey]: Math.round(primaryBaseValue * level * 0.1),
       cost: shardData[level].cost,
       costType: shardData[level].costType,
@@ -39,7 +44,7 @@ export const calculateForgeLevels = (
   // Levels 7-8: Secondary stat boost
   for (let level = 7; level <= 8; level++) {
     const secondaryBoost = (level - 6) * (secondaryStatBoostPercent / 100);
-    forgeLevels[level.toString()] = {
+    forgeLevels[level] = {
       [primaryStatKey]: Math.round(primaryBaseValue * 0.6), // stays at +6 level
       [secondaryStatKey]: Math.round(secondaryBaseValue * secondaryBoost),
       cost: shardData[level].cost,
@@ -49,7 +54,7 @@ export const calculateForgeLevels = (
   }
 
   // Level 9: +40% more primary stat (total +100%), secondary stays, plus awakening
-  forgeLevels["9"] = {
+  forgeLevels[9] = {
     [primaryStatKey]: Math.round(primaryBaseValue * 1.0), // +100% total
     [secondaryStatKey]: Math.round(
       secondaryBaseValue * 2 * (secondaryStatBoostPercent / 100),

@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FightMe — Live Cache Dashboard</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          "Segoe UI",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: #0f1117;
+        color: #e0e0e0;
+        padding: 20px;
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 8px;
+        color: #7dd3fc;
+        font-size: 1.6rem;
+      }
+      .status-bar {
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 0.85rem;
+      }
+      .status-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 6px;
+        vertical-align: middle;
+      }
+      .status-dot.connected {
+        background: #4ade80;
+      }
+      .status-dot.disconnected {
+        background: #f87171;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      @media (max-width: 1200px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: #1a1d27;
+        border: 1px solid #2a2d3a;
+        border-radius: 10px;
+        padding: 16px;
+        overflow: hidden;
+      }
+      .card.full-width {
+        grid-column: 1 / -1;
+      }
+      .card h2 {
+        font-size: 1rem;
+        color: #94a3b8;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .card h2 .count {
+        background: #334155;
+        color: #7dd3fc;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+      }
+      .table-wrap {
+        overflow-x: auto;
+        max-height: 420px;
+        overflow-y: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+      }
+      th {
+        position: sticky;
+        top: 0;
+        background: #1e2132;
+        color: #94a3b8;
+        text-align: left;
+        padding: 8px 10px;
+        border-bottom: 1px solid #2a2d3a;
+        white-space: nowrap;
+      }
+      td {
+        padding: 7px 10px;
+        border-bottom: 1px solid #1e2132;
+        white-space: nowrap;
+      }
+      tr:hover td {
+        background: #222636;
+      }
+      .empty {
+        text-align: center;
+        color: #555;
+        padding: 30px;
+        font-style: italic;
+      }
+      .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+      .badge-idle {
+        background: #1e3a2f;
+        color: #4ade80;
+      }
+      .badge-busy {
+        background: #3b1f1f;
+        color: #f87171;
+      }
+      .badge-waiting {
+        background: #2e2a1a;
+        color: #fbbf24;
+      }
+      .badge-active {
+        background: #1e3a2f;
+        color: #4ade80;
+      }
+      .badge-finished {
+        background: #1e2639;
+        color: #60a5fa;
+      }
+      .badge-pvp {
+        background: #2d1f3d;
+        color: #c084fc;
+      }
+      .badge-pve {
+        background: #1a2d3d;
+        color: #67e8f9;
+      }
+      .hp-bar {
+        width: 80px;
+        height: 8px;
+        background: #2a2d3a;
+        border-radius: 4px;
+        overflow: hidden;
+        display: inline-block;
+        vertical-align: middle;
+        margin-left: 6px;
+      }
+      .hp-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+      }
+      .updated-at {
+        text-align: center;
+        color: #555;
+        font-size: 0.75rem;
+        margin-top: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>FightMe — Live Cache Dashboard</h1>
+    <div class="status-bar">
+      <span class="status-dot disconnected" id="statusDot"></span>
+      <span id="statusText">Connecting...</span>
+    </div>
+
+    <div class="grid">
+      <!-- Active Heroes -->
+      <div class="card">
+        <h2>Active Heroes <span class="count" id="heroCount">0</span></h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Hero ID</th>
+                <th>Nickname</th>
+                <th>Lvl</th>
+                <th>HP</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="heroesBody">
+              <tr>
+                <td colspan="5" class="empty">No active heroes</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- User Sockets -->
+      <div class="card">
+        <h2>User Sockets <span class="count" id="socketCount">0</span></h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Hero ID</th>
+                <th>Connected</th>
+              </tr>
+            </thead>
+            <tbody id="socketsBody">
+              <tr>
+                <td colspan="2" class="empty">No connected sockets</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- User Rooms -->
+      <div class="card">
+        <h2>User → Room Map <span class="count" id="userRoomCount">0</span></h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Hero ID</th>
+                <th>Room ID</th>
+                <th>Type</th>
+                <th>Hero Name</th>
+                <th>Hero Lvl</th>
+              </tr>
+            </thead>
+            <tbody id="userRoomsBody">
+              <tr>
+                <td colspan="5" class="empty">No user-room mappings</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Fight Rooms -->
+      <div class="card full-width">
+        <h2>Fight Rooms <span class="count" id="roomCount">0</span></h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Room ID</th>
+                <th>Status</th>
+                <th>Mode</th>
+                <th>Round</th>
+                <th>Creator</th>
+                <th>Players</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody id="roomsBody">
+              <tr>
+                <td colspan="7" class="empty">No fight rooms</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="updated-at" id="updatedAt">Waiting for data...</div>
+
+    <script>
+      const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";
+      const wsUrl = wsProtocol + "//" + location.host + "/dashboard-ws";
+      let ws;
+      let reconnectTimer;
+
+      function connect() {
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          document.getElementById("statusDot").className =
+            "status-dot connected";
+          document.getElementById("statusText").textContent =
+            "Connected — live";
+        };
+
+        ws.onclose = () => {
+          document.getElementById("statusDot").className =
+            "status-dot disconnected";
+          document.getElementById("statusText").textContent =
+            "Disconnected — reconnecting...";
+          clearTimeout(reconnectTimer);
+          reconnectTimer = setTimeout(connect, 2000);
+        };
+
+        ws.onerror = () => ws.close();
+
+        ws.onmessage = e => {
+          try {
+            const data = JSON.parse(e.data);
+            render(data);
+          } catch {}
+        };
+      }
+
+      function hpColor(ratio) {
+        if (ratio > 0.6) return "#4ade80";
+        if (ratio > 0.3) return "#fbbf24";
+        return "#f87171";
+      }
+
+      function escapeHtml(str) {
+        const div = document.createElement("div");
+        div.textContent = String(str ?? "");
+        return div.innerHTML;
+      }
+
+      function render(data) {
+        // Active Heroes
+        const heroes = data.activeHeroes || [];
+        document.getElementById("heroCount").textContent = heroes.length;
+        const hBody = document.getElementById("heroesBody");
+        if (heroes.length === 0) {
+          hBody.innerHTML =
+            '<tr><td colspan="5" class="empty">No active heroes</td></tr>';
+        } else {
+          hBody.innerHTML = heroes
+            .map(([id, h]) => {
+              const ratio = h.maxHp > 0 ? h.currHp / h.maxHp : 0;
+              return `<tr>
+            <td>${escapeHtml(id)}…</td>
+            <td>${escapeHtml(h.nickname)}</td>
+            <td>${h.lvl}</td>
+            <td>${h.currHp}/${h.maxHp}
+              <div class="hp-bar"><div class="hp-bar-fill" style="width:${ratio * 100}%;background:${hpColor(ratio)}"></div></div>
+            </td>
+            <td><span class="badge badge-${h.status}">${h.status}</span></td>
+          </tr>`;
+            })
+            .join("");
+        }
+
+        // User Sockets
+        const sockets = data.userSockets || [];
+        document.getElementById("socketCount").textContent = sockets.length;
+        const sBody = document.getElementById("socketsBody");
+        if (sockets.length === 0) {
+          sBody.innerHTML =
+            '<tr><td colspan="2" class="empty">No connected sockets</td></tr>';
+        } else {
+          sBody.innerHTML = sockets
+            .map(
+              id =>
+                `<tr><td>${escapeHtml(id)}</td><td><span class="badge badge-active">●</span></td></tr>`,
+            )
+            .join("");
+        }
+
+        // User Rooms
+        const userRooms = data.userRooms || [];
+        document.getElementById("userRoomCount").textContent = userRooms.length;
+        const urBody = document.getElementById("userRoomsBody");
+        if (userRooms.length === 0) {
+          urBody.innerHTML =
+            '<tr><td colspan="5" class="empty">No user-room mappings</td></tr>';
+        } else {
+          urBody.innerHTML = userRooms
+            .map(
+              ([heroId, r]) =>
+                `<tr>
+            <td>${escapeHtml(heroId)}…</td>
+            <td>${escapeHtml(r.id ?? "—")}…</td>
+            <td><span class="badge ${r.isPvp ? "badge-pvp" : "badge-pve"}">${r.isPvp ? "PvP" : "PvE"}</span></td>
+            <td>${escapeHtml(r.heroName ?? "—")}</td>
+            <td>${r.heroLvl ?? "—"}</td>
+          </tr>`,
+            )
+            .join("");
+        }
+
+        // Fight Rooms
+        const rooms = data.fightRooms || [];
+        document.getElementById("roomCount").textContent = rooms.length;
+        const rBody = document.getElementById("roomsBody");
+        if (rooms.length === 0) {
+          rBody.innerHTML =
+            '<tr><td colspan="7" class="empty">No fight rooms</td></tr>';
+        } else {
+          rBody.innerHTML = rooms
+            .map(
+              ([id, r]) =>
+                `<tr>
+            <td>${escapeHtml(id ?? "—")}…</td>
+            <td><span class="badge badge-${r.status}">${r.status}</span></td>
+            <td><span class="badge ${r.isPvp ? "badge-pvp" : "badge-pve"}">${r.isPvp ? "PvP" : "PvE"}</span></td>
+            <td>${r.currentRound}</td>
+            <td>${escapeHtml(r.creator?.nickname ?? "—")} (Lvl ${r.creator?.level ?? "?"})</td>
+            <td>${(r.players || []).map(p => escapeHtml(p.name)).join(", ") || "—"}</td>
+            <td>${r.createdAt ? new Date(r.createdAt).toLocaleTimeString() : "—"}</td>
+          </tr>`,
+            )
+            .join("");
+        }
+
+        document.getElementById("updatedAt").textContent =
+          "Last updated: " + new Date().toLocaleTimeString();
+      }
+
+      connect();
+    </script>
+  </body>
+</html>

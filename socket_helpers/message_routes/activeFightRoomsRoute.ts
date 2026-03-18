@@ -1,4 +1,4 @@
-import { fightRoomsCache, userRoomsCache } from "../socketCache";
+import { fightRoomsCache } from "../socketCache";
 import { topic } from "../socketTopics";
 
 export const activeFightRoomsRoute = (

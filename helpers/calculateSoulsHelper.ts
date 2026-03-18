@@ -14,7 +14,8 @@ export const calculateSouls = (
   const minSouls = 4 * (playerLevel + 1);
   const maxSouls = 4 * (playerLevel + 2);
 
-  const modifier = botLevel / playerLevel;
+  // +10% per bot level above player, -10% per bot level below player, min 0%
+  const modifier = Math.max(1 + (botLevel - playerLevel) * 0.1, 0);
 
   const souls =
     Math.floor(Math.random() * (maxSouls - minSouls + 1)) + minSouls;
@@ -23,5 +24,5 @@ export const calculateSouls = (
     return Math.floor((modifier * souls) / 5);
   }
 
-  return souls;
+  return Math.floor(modifier * souls);
 };

@@ -16,6 +16,7 @@ export const insertHero = async ({ data, isBot }: Props) => {
       .values({
         ...data,
         type: isBot ? "bot" : "hero",
+        statsPoints: 5,
       })
       .returning();
     console.log("HERO_CREATE", { ...data });

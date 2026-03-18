@@ -1,5 +1,5 @@
 import { type BunRequest } from "bun";
-import { updateHeroStats } from "../drizzle/queries/hero";
+import { selectHero, updateHeroStats } from "../drizzle/queries/hero";
 import { activeHeroesCache } from "../socket_helpers/socketCache";
 import { calculateStatsHelper } from "../helpers/calculateStatsHelper";
 
@@ -12,7 +12,11 @@ export const updateHeroStatsRoute = async (
 
     await updateHeroStats(body);
     console.log(`Update Hero stats with heroId: ${body.ownerId}`);
-    const { hp: maxHp } = calculateStatsHelper({ stats: body });
+    const hero = await selectHero(body.ownerId);
+    const { hp: maxHp } = calculateStatsHelper({
+      stats: body,
+      items: hero?.items ?? [],
+    });
     activeHeroesCache.set(body.ownerId, {
       ...activeHeroesCache.get(body.ownerId)!,
       maxHp: maxHp,

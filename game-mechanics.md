@@ -37,12 +37,12 @@ Each base stat influences calculated stats through specific multipliers:
 #### Mastery
 
 - **Crit Multiplier**: `mastery × 0.02`
-- **Crit Chance**: `mastery × 0.30(%)`
+- **Crit Chance**: `mastery × 0.30%`
 
 #### Agility
 
-- **Evade Chance**: `agility × 0.30(%)`
-- **Fast Chance**: `agility × 0.20(%)`
+- **Evade Chance**: `agility × 0.30%`
+- **Fast Chance**: `agility × 0.20%`
 
 #### Knowledge
 
@@ -50,10 +50,14 @@ Each base stat influences calculated stats through specific multipliers:
 
 #### Health
 
-- **HP Points**: `health × 100`
+- **HP Points**: `health × 10`
 - **Block Area**: `health × 1.5`
 
 ### Stat Limits
+
+> ⚠️ **Note**: The limits below are calculated assuming a hero at **level 100**
+> (max stat points). The current release max level is **25**, so players will
+> reach only a fraction of these caps from stats alone.
 
 All calculated stats have maximum limits split between stats allocation and gear
 contribution:
@@ -62,23 +66,24 @@ contribution:
 | ------------------- | --------- | ---------- | --------- |
 | **Base Damage**     | 450       | 150        | 300       |
 | **Block Area**      | TBC       | TBC        | TBC       |
-| **Attack Area**     | TBC       | TBC        | TBC       |
+| **Attack Area**     | 50        | 20         | 30        |
 | **Crit Multiplier** | 5.0×      | 2.0×       | 3.0×      |
 | **Crit Chance**     | 70%       | 30%        | 40%       |
 | **Evade Chance**    | 70%       | 30%        | 40%       |
 | **Fast Chance**     | 50%       | 20%        | 30%       |
-| **HP**              | 20,000    | 10,000     | 10,000    |
+| **HP**              | 2,000     | 1,000      | 1,000     |
 
 ---
 
 ## Leveling System
 
-### Level Progression
+### Level Progression for Release v1.00
 
 - **Starting Level**: 1
 - **Maximum Level**: 25
-- **Starting Stats**: 5 points in each stat (25 total)
-- **Total Available Points**: 255
+- **Starting Stats**: 5 points in each stat (25 total) + 5 free points to
+  allocate
+- **Total Available Points**: 130
 
 ### Stat Allocation Rules
 

@@ -11,7 +11,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { heroSxma } from "./hero";
 
-type itemStatsType = {
+export type itemStatsType = {
   hp?: number;
   damage?: number;
   attackArea?: number;
@@ -21,10 +21,11 @@ type itemStatsType = {
   evadeChance?: number;
   fastChance?: number;
   skillCritChance?: number;
+  awakeningOptions?: string[];
   //TODO: add more stats specific to gear + awakenings?
 };
 
-type forgeRequirementsType = {
+export type forgeRequirementsType = {
   cost: number; // cost in shards
   costType: string; // type of shards (A, B, C)
   successRate: number; // percentage chance of success

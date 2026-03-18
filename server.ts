@@ -1,7 +1,12 @@
 import { createRoom } from "./rest_routes/createRoom";
 import { createHero } from "./rest_routes/createHero";
 import { joinRoom } from "./rest_routes/joinRoom";
-import { activeHeroesCache, userSockets } from "./socket_helpers/socketCache";
+import {
+  activeHeroesCache,
+  fightRoomsCache,
+  userRoomsCache,
+  userSockets,
+} from "./socket_helpers/socketCache";
 import { topic } from "./socket_helpers/socketTopics";
 import { messageRouter } from "./socket_helpers/socketRouter";
 import { getHero } from "./rest_routes/getHero";
@@ -16,6 +21,11 @@ import { buyItem } from "./rest_routes/buyItem";
 import { moveItem } from "./rest_routes/moveItem";
 import { createBotWithItems } from "./rest_routes/createBotWithItems";
 import { forgeItem } from "./rest_routes/forgeItem";
+import { deleteHero } from "./rest_routes/deleteHero";
+
+// --- Dashboard ---
+const dashboardHtml = await Bun.file("./dashboard/dashboard.html").text();
+const dashboardClients = new Set<Bun.ServerWebSocket<{ heroId?: string }>>();
 
 const newServer = Bun.serve({
   port: 3003,
@@ -26,6 +36,23 @@ const newServer = Bun.serve({
     // const cookies = new Bun.CookieMap(req.headers.get("cookie")!);
     // const userToken = cookies.get("X-Token")
     // const heroId = getUserFromToken(ws.data.userToken);
+
+    // Serve dashboard HTML
+    if (url.pathname === "/dashboard") {
+      return new Response(dashboardHtml, {
+        headers: { "Content-Type": "text/html" },
+      });
+    }
+
+    // Dashboard live WebSocket
+    if (url.pathname === "/dashboard-ws") {
+      const success = server.upgrade(req, {
+        data: { heroId: "__dashboard__" },
+      });
+      return success
+        ? undefined
+        : new Response("WebSocket upgrade failed", { status: 400 });
+    }
 
     if (url.pathname === "/fightroom") {
       console.log("SAERCH_PARAMS", url.searchParams);
@@ -49,6 +76,7 @@ const newServer = Bun.serve({
     "/user/registerHero/:heroName": async req => await createHero({ req }),
     "/user/getHero/:heroId": async req => await getHero(req),
     "/user/updateHeroStats": async req => await updateHeroStatsRoute(req),
+    "/user/deleteHero/:heroId": async req => await deleteHero(req),
     "/fight/createRoom/:heroId": async req => await createRoom(req),
     "/fight/createBotRoom/:heroId/:botId": async req =>
       await createBotRoom(req),
@@ -72,6 +100,13 @@ const newServer = Bun.serve({
     async open(ws: Bun.ServerWebSocket<{ heroId?: string }>) {
       //TODO ==> check whether user is trying to re-connect i.e. by matching heroId & roomId to the Map objects and subscribe accrodingly
       const { heroId } = ws.data;
+
+      // Dashboard client — just track it, don't treat as a game socket
+      if (heroId === "__dashboard__") {
+        dashboardClients.add(ws);
+        return;
+      }
+
       ws;
       if (!heroId) {
         ws.close(401, "Unauthorised Access");
@@ -99,6 +134,12 @@ const newServer = Bun.serve({
       }
     },
     async close(ws) {
+      // Dashboard client cleanup
+      if (ws.data.heroId === "__dashboard__") {
+        dashboardClients.delete(ws);
+        return;
+      }
+
       console.log(`Player ${ws.data.heroId} disconnected`);
       // Clean up disconnected players from rooms
       if (ws.data.heroId) {
@@ -128,6 +169,23 @@ const newServer = Bun.serve({
 
 // console.log(`Listening on ${server.hostname}:${server.port}`);
 console.log(`Listening on ${newServer.hostname}:${newServer.port}`);
+console.log(
+  `Dashboard: http://${newServer.hostname}:${newServer.port}/dashboard`,
+);
+
+// --- Broadcast cache snapshot to dashboard clients every 1s ---
+setInterval(() => {
+  if (dashboardClients.size === 0) return;
+  const snapshot = JSON.stringify({
+    userSockets: Array.from(userSockets.keys()),
+    activeHeroes: Array.from(activeHeroesCache.entries()),
+    fightRooms: Array.from(fightRoomsCache.entries()),
+    userRooms: Array.from(userRoomsCache.entries()),
+  });
+  for (const client of dashboardClients) {
+    client.send(snapshot);
+  }
+}, 1000);
 
 /*
 !! IMPORTANT !! ==> This seems to be a really expensive daemon/logic in terms of service load AND "write" methods to DB.

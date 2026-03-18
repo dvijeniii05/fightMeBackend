@@ -29,6 +29,7 @@ export const createItem = async (req: BunRequest<"/misc/createItem">) => {
       price: body.price,
       stackable: body.stackable,
       isForgable: body?.isForgable,
+      slots: body.slots,
       forgeLevels,
     });
   } catch (error) {

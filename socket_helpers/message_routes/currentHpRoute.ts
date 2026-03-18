@@ -1,4 +1,5 @@
 import { activeHeroesCache } from "../socketCache";
+import { calculateRegenRate } from "../../helpers/calculateRegenRate";
 
 export const currentHpRoute = async (
   ws: Bun.ServerWebSocket<{
@@ -10,18 +11,22 @@ export const currentHpRoute = async (
 ) => {
   try {
     const hero = activeHeroesCache.get(parsedMessage.heroId);
-    console.log("CURRENT_HP_ROUTE", hero);
+    // console.log("CURRENT_HP_ROUTE", hero);
     if (hero) {
       //Check following every 1 OR 5 sec
       setInterval(() => {
-        console.log("IN_INTERVAL");
-        console.log("HP_CHECK", hero.currHp, hero.maxHp);
+        // Re-read from cache each tick to pick up updates (e.g. maxHp changes)
+        const hero = activeHeroesCache.get(parsedMessage.heroId);
+        if (!hero) return;
+        // console.log("IN_INTERVAL");
+        // console.log("HP_CHECK", hero.currHp, hero.maxHp);
 
         if (hero.currHp < hero.maxHp) {
-          console.log("IN_INTERVAL_REGEN");
-          //TODO: this logic needs to include a calculated hpRegenRate that should be added instead of static 15
-          //calculate & init. live hp daemon
-          hero.currHp = Math.round(Math.min(hero.currHp + 100, hero.maxHp));
+          // console.log("IN_INTERVAL_REGEN");
+          const regenPerTick = calculateRegenRate(hero.maxHp);
+          hero.currHp = Math.round(
+            Math.min(hero.currHp + regenPerTick, hero.maxHp),
+          );
           ws.send(
             JSON.stringify({
               type: "current_hp",
@@ -32,7 +37,7 @@ export const currentHpRoute = async (
             }),
           );
         } else {
-          console.log("IN_INTERVAL_FULL");
+          // console.log("IN_INTERVAL_FULL");
 
           //hero is full hp, no calculation is required
           ws.send(
