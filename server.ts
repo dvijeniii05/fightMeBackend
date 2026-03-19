@@ -29,6 +29,7 @@ const dashboardClients = new Set<Bun.ServerWebSocket<{ heroId?: string }>>();
 
 const newServer = Bun.serve({
   port: 3003,
+  hostname: "0.0.0.0",
   fetch(req, server) {
     const url = new URL(req.url);
 
