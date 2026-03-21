@@ -7,7 +7,7 @@ export const activeFightRoomsRoute = (
   }>,
 ) => {
   const roomsArray = Array.from(fightRoomsCache.values());
-  console.log("FIGHT_ROOMS_ARRAY", roomsArray);
+  // console.log("FIGHT_ROOMS_ARRAY", roomsArray);
   ws.subscribe(topic.activeFightRooms); //to subs to all active_rooms
   ws.send(
     JSON.stringify({

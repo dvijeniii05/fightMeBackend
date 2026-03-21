@@ -84,7 +84,7 @@ export const createRoomRoute = async (
       );
 
       const roomsArray = Array.from(fightRoomsCache.values());
-      console.log("FIGHT_ROOMS_ARRAY", roomsArray);
+      // console.log("FIGHT_ROOMS_ARRAY", roomsArray);
 
       server.publish(
         topic.activeFightRooms,

@@ -79,7 +79,7 @@ export const submitRoundRoute = async (
                 id: parsedMessage.heroId,
                 madeSelection: true,
               });
-              console.log("Second_Player_action_commited", existingRound);
+              // console.log("Second_Player_action_commited", existingRound);
 
               if (existingRound.actionedPlayers.length === 2) {
                 console.log("BOTH_ACTIONS_RECORDED");
@@ -201,7 +201,7 @@ export const submitRoundRoute = async (
               };
 
               room.rounds.unshift(newRound);
-              console.log("First_Player_action_commited", room.rounds);
+              // console.log("First_Player_action_commited", room.rounds);
 
               server.publish(
                 room.id,
@@ -270,7 +270,7 @@ export const submitRoundRoute = async (
 
             room.rounds.unshift(newRound);
 
-            console.log("PvE results:", newRound.results);
+            // console.log("PvE results:", newRound.results);
 
             player.hp = newRound.results.find(
               res => res.playerId === player.id,
