@@ -32,8 +32,6 @@ export interface GearStatsProps {
 export interface CalculatedStatsProps {
   hp: number;
   baseDamageBoost: number;
-  attackArea: number;
-  blockArea: number;
   critChance: number;
   critMultiplier: number;
   evadeChance: number;
@@ -137,8 +135,6 @@ export const calculateStatsHelper = (
   return {
     hp,
     baseDamageBoost,
-    attackArea,
-    blockArea: tempBlockArea,
     critChance,
     critMultiplier,
     evadeChance,

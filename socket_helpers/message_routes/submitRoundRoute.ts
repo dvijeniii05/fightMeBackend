@@ -189,9 +189,7 @@ export const submitRoundRoute = async (
                   {
                     playerId: parsedMessage.heroId,
                     attackTime: parsedMessage.selected.attack,
-                    attackArea: currUser?.stats.attackArea,
                     blockTime: parsedMessage.selected.block,
-                    blockArea: currUser?.stats.blockArea,
                   },
                 ],
                 actionedPlayers: [
@@ -219,8 +217,8 @@ export const submitRoundRoute = async (
             const player = room.players[0];
             const bot = room?.players[1];
 
-            const botAttackTime = Math.floor(Math.random() * 200); //TODO: improve bot logic
-            const botBlockTime = Math.floor(Math.random() * 200); //TODO: improve bot logic
+            const botAttackTime = Math.floor(Math.random() * 5) + 1; //TODO: improve bot logic
+            const botBlockTime = Math.floor(Math.random() * 5) + 1; //TODO: improve bot logic
 
             //Calculate outcomes and send to both players
             const roundOutcome = calculateRoundOutcome(
@@ -246,16 +244,12 @@ export const submitRoundRoute = async (
                 {
                   playerId: parsedMessage.heroId,
                   attackTime: parsedMessage.selected.attack,
-                  attackArea: currUser?.stats.attackArea,
                   blockTime: parsedMessage.selected.block,
-                  blockArea: currUser?.stats.blockArea,
                 },
                 {
                   playerId: bot.id,
-                  attackTime: Math.floor(Math.random() * 200), //TODO: improve bot logic
-                  attackArea: bot?.stats.attackArea,
-                  blockTime: Math.floor(Math.random() * 200), //TODO: improve bot logic
-                  blockArea: bot?.stats.blockArea,
+                  attackTime: botAttackTime,
+                  blockTime: botBlockTime,
                 },
               ],
               actionedPlayers: [

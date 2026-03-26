@@ -80,24 +80,6 @@ export const calculateRoundOutcome = (
   const isFastA = isItFastHelper(A.fastChance);
   const isFastB = isItFastHelper(B.fastChance);
 
-  const attackRangeA = {
-    min: Math.max(A.attackTime - A.attackArea, 0), //min limit is 0
-    max: Math.min(A.attackTime + A.attackArea, 200), //max limit is 200
-  };
-  const attackRangeB = {
-    min: Math.max(B.attackTime - B.attackArea, 0),
-    max: Math.min(B.attackTime + B.attackArea, 200),
-  };
-
-  const blockRangeA = {
-    min: Math.max(A.blockTime - A.blockArea, 0),
-    max: Math.min(A.blockTime + A.blockArea, 200),
-  };
-  const blockRangeB = {
-    min: Math.max(B.blockTime - B.blockArea, 0),
-    max: Math.min(B.blockTime + B.blockArea, 200),
-  };
-
   const potentialDamageA = Math.round(
     A.baseDamageBoost * (isCritA ? A.critMultiplier : 1) * (isFastA ? 2.5 : 1),
   );
@@ -106,18 +88,19 @@ export const calculateRoundOutcome = (
   );
 
   //Below relates to block calculation. Is it blocked? If yes, then what is the amount.
-  //If block covers 50%+ of attackArea then 0 damage is dealt
 
   const incomingDamageA = incomingDamageHelper({
-    blockRange: blockRangeA,
-    incomingAttackRange: attackRangeB,
-    incomingDamage: potentialDamageB,
+    blockTime: A.blockTime,
+    attackTime: B.attackTime,
+    baseIncomingDamage: B.baseDamageBoost,
+    potentialIncomingDamage: potentialDamageB,
   });
 
   const incomingDamageB = incomingDamageHelper({
-    blockRange: blockRangeB,
-    incomingAttackRange: attackRangeA,
-    incomingDamage: potentialDamageA,
+    blockTime: B.blockTime,
+    attackTime: A.attackTime,
+    baseIncomingDamage: A.baseDamageBoost,
+    potentialIncomingDamage: potentialDamageA,
   });
 
   const hpLeftA = Math.round(
@@ -137,8 +120,8 @@ export const calculateRoundOutcome = (
       outgoingDamage: incomingDamageB.damage,
       block: incomingDamageA.block,
       isBlocked: incomingDamageA.isBlocked,
-      attackRange: `${attackRangeA.min}-${attackRangeA.max}`,
-      blockRange: `${blockRangeA.min}-${blockRangeA.max}`,
+      attackArea: A.attackTime,
+      blockArea: A.blockTime,
     },
     playerTwo: {
       hp: hpLeftB,
@@ -149,8 +132,8 @@ export const calculateRoundOutcome = (
       outgoingDamage: incomingDamageA.damage,
       block: incomingDamageB.block,
       isBlocked: incomingDamageB.isBlocked,
-      attackRange: `${attackRangeB.min}-${attackRangeB.max}`,
-      blockRange: `${blockRangeB.min}-${blockRangeB.max}`,
+      attackArea: B.attackTime,
+      blockArea: B.blockTime,
     },
   };
 };

@@ -17,6 +17,7 @@ export const heroSxma = pgTable(
   {
     id: varchar("id").primaryKey().unique().notNull(),
     nickname: varchar("nickname").notNull(),
+    avatar: smallint("avatar").default(1).notNull(),
     location: text("location"), // upd to match current location
     born: text("born"), // would this be needed??
     lvl: smallint("lvl").default(1).notNull(),

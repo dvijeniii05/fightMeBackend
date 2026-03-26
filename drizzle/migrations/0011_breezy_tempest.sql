@@ -1,0 +1,1 @@
+ALTER TABLE "hero" ADD COLUMN "avatar" smallint DEFAULT 1 NOT NULL;

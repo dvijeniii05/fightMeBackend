@@ -35,9 +35,7 @@ export type Round = {
     playerId: string;
     // healthLeft: number; //OR leave it here???
     attackTime: number;
-    attackArea: number; // OR string?
     blockTime: number;
-    blockArea: number; // OR string?
 
     //TODO: to add magic related fields
     // isMulticast: boolean;
@@ -52,8 +50,8 @@ export type Round = {
     isFast?: boolean;
     isBlocked?: boolean;
     block: string; //in %
-    attackRange: string;
-    blockRange: string;
+    attackArea: number;
+    blockArea: number;
   }[];
 
   //TODO: Might be an overkill??
