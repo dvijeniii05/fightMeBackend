@@ -27,3 +27,7 @@ export const selectFightRoom = async (roomId: string) => {
 
   return fightRoom[0];
 };
+
+export const deleteFightRoom = async (roomId: string) => {
+  await db.delete(fightRoomSxma).where(eq(fightRoomSxma.roomId, roomId));
+};

@@ -22,6 +22,7 @@ import { moveItem } from "./rest_routes/moveItem";
 import { createBotWithItems } from "./rest_routes/createBotWithItems";
 import { forgeItem } from "./rest_routes/forgeItem";
 import { deleteHero } from "./rest_routes/deleteHero";
+import { staleRoomDaemon } from "./daemons/staleRoomDaemon";
 
 // --- Dashboard ---
 const dashboardHtml = await Bun.file("./dashboard/dashboard.html").text();
@@ -195,3 +196,6 @@ with players' HP + lvl? i.e. 1000 hp = 5 min of rest if coming from 0?
 */
 // ✅ Explicitly start the health regen daemon after server boots
 // hpRegenDaemon(newServer);
+
+// ✅ Remove fight rooms stuck in 'waiting' for over an hour
+staleRoomDaemon();
