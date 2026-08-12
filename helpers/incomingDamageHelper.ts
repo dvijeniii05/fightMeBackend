@@ -1,4 +1,8 @@
+import { BLOCK_TOLERANCE_MS } from "../constants/combatTiming.ts";
+
 interface Props {
+  blockZone: number;
+  attackZone: number;
   blockTime: number;
   attackTime: number;
   baseIncomingDamage: number;
@@ -9,7 +13,12 @@ interface Props {
 export const incomingDamageHelper = (props: Props) => {
   console.log("Incoming_Damage_helper");
 
-  const isBlocked = props.blockTime === props.attackTime;
+  const hasValidTiming =
+    Number.isFinite(props.blockTime) && Number.isFinite(props.attackTime);
+  const isBlocked =
+    props.blockZone === props.attackZone &&
+    hasValidTiming &&
+    Math.abs(props.blockTime - props.attackTime) <= BLOCK_TOLERANCE_MS;
 
   //Full damage as no block involved
   if (isBlocked)

@@ -61,13 +61,15 @@ export const calculateDamageHelper = (to: any, from: any) => {
 };
 
 interface PLayerActionAndStats extends Omit<CalculatedStatsProps, "hp"> {
+  attackZone: number;
   attackTime: number;
+  blockZone: number;
   blockTime: number;
   maxHp: number;
   hp: number;
 }
 //Below A - playerOne ; B - playerTwo
-export const calculateRoundOutcome = (
+export const calcRoundResults = (
   A: PLayerActionAndStats,
   B: PLayerActionAndStats,
 ) => {
@@ -90,14 +92,18 @@ export const calculateRoundOutcome = (
   //Below relates to block calculation. Is it blocked? If yes, then what is the amount.
 
   const incomingDamageA = incomingDamageHelper({
+    blockZone: A.blockZone,
     blockTime: A.blockTime,
+    attackZone: B.attackZone,
     attackTime: B.attackTime,
     baseIncomingDamage: B.baseDamageBoost,
     potentialIncomingDamage: potentialDamageB,
   });
 
   const incomingDamageB = incomingDamageHelper({
+    blockZone: B.blockZone,
     blockTime: B.blockTime,
+    attackZone: A.attackZone,
     attackTime: A.attackTime,
     baseIncomingDamage: A.baseDamageBoost,
     potentialIncomingDamage: potentialDamageA,
@@ -120,8 +126,8 @@ export const calculateRoundOutcome = (
       outgoingDamage: incomingDamageB.damage,
       block: incomingDamageA.block,
       isBlocked: incomingDamageA.isBlocked,
-      attackArea: A.attackTime,
-      blockArea: A.blockTime,
+      attackArea: A.attackZone,
+      blockArea: A.blockZone,
     },
     playerTwo: {
       hp: hpLeftB,
@@ -132,8 +138,8 @@ export const calculateRoundOutcome = (
       outgoingDamage: incomingDamageA.damage,
       block: incomingDamageB.block,
       isBlocked: incomingDamageB.isBlocked,
-      attackArea: B.attackTime,
-      blockArea: B.blockTime,
+      attackArea: B.attackZone,
+      blockArea: B.blockZone,
     },
   };
 };

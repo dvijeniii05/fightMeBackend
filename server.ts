@@ -23,10 +23,71 @@ import { createBotWithItems } from "./rest_routes/createBotWithItems";
 import { forgeItem } from "./rest_routes/forgeItem";
 import { deleteHero } from "./rest_routes/deleteHero";
 import { staleRoomDaemon } from "./daemons/staleRoomDaemon";
+import { deleteFightRoom } from "./drizzle/queries/fightRoom";
 
 // --- Dashboard ---
 const dashboardHtml = await Bun.file("./dashboard/dashboard.html").text();
 const dashboardClients = new Set<Bun.ServerWebSocket<{ heroId?: string }>>();
+
+const handleDashboardMessage = async (
+  ws: Bun.ServerWebSocket<{ heroId?: string }>,
+  data: unknown,
+) => {
+  if (!data || typeof data !== "object" || !("action" in data)) {
+    throw new Error("Invalid dashboard command");
+  }
+
+  if (data.action === "deleteUserRoom") {
+    if (!("heroId" in data) || typeof data.heroId !== "string") {
+      throw new Error("heroId is required");
+    }
+
+    const deleted = userRoomsCache.delete(data.heroId);
+    ws.send(
+      JSON.stringify({
+        type: "dashboardResult",
+        action: data.action,
+        ok: deleted,
+        message: deleted
+          ? `Removed room mapping for ${data.heroId}`
+          : `No room mapping found for ${data.heroId}`,
+      }),
+    );
+    return;
+  }
+
+  if (data.action === "deleteFightRooms") {
+    if (
+      !("roomIds" in data) ||
+      !Array.isArray(data.roomIds) ||
+      !data.roomIds.every(roomId => typeof roomId === "string")
+    ) {
+      throw new Error("roomIds must be an array of strings");
+    }
+
+    const roomIds = [...new Set(data.roomIds)];
+    for (const roomId of roomIds) {
+      await deleteFightRoom(roomId);
+      fightRoomsCache.delete(roomId);
+
+      for (const [heroId, userRoom] of userRoomsCache.entries()) {
+        if (userRoom.id === roomId) userRoomsCache.delete(heroId);
+      }
+    }
+
+    ws.send(
+      JSON.stringify({
+        type: "dashboardResult",
+        action: data.action,
+        ok: true,
+        message: `Deleted ${roomIds.length} fight room${roomIds.length === 1 ? "" : "s"}`,
+      }),
+    );
+    return;
+  }
+
+  throw new Error("Unknown dashboard command");
+};
 
 const newServer = Bun.serve({
   port: 3003,
@@ -128,11 +189,25 @@ const newServer = Bun.serve({
     async message(ws, message: string) {
       try {
         const data = JSON.parse(message);
+        if (ws.data.heroId === "__dashboard__") {
+          await handleDashboardMessage(ws, data);
+          return;
+        }
+
         console.log("WS_CHECK", ws);
         console.log("IN_MESSAGE?", data);
         await messageRouter(newServer, ws, data);
       } catch (err) {
         console.error("Bad WS message:", err);
+        if (ws.data.heroId === "__dashboard__") {
+          ws.send(
+            JSON.stringify({
+              type: "dashboardResult",
+              ok: false,
+              message: err instanceof Error ? err.message : "Command failed",
+            }),
+          );
+        }
       }
     },
     async close(ws) {

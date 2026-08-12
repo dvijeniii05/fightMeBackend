@@ -80,6 +80,70 @@
         border-radius: 12px;
         font-size: 0.8rem;
       }
+      .card-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+      .card-heading h2 {
+        margin-bottom: 0;
+      }
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      button {
+        border: 1px solid #475569;
+        border-radius: 6px;
+        background: #252a38;
+        color: #e2e8f0;
+        padding: 6px 10px;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button:hover:not(:disabled) {
+        background: #303747;
+      }
+      button:focus-visible,
+      input:focus-visible {
+        outline: 2px solid #7dd3fc;
+        outline-offset: 2px;
+      }
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+      }
+      .danger-button {
+        border-color: #7f1d1d;
+        background: #3b1f1f;
+        color: #fca5a5;
+      }
+      .danger-button:hover:not(:disabled) {
+        background: #522323;
+      }
+      .compact-button {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+      }
+      .selection-count {
+        color: #94a3b8;
+        font-size: 0.8rem;
+        white-space: nowrap;
+      }
+      .select-cell {
+        width: 36px;
+        text-align: center;
+      }
+      input[type="checkbox"] {
+        width: 15px;
+        height: 15px;
+        accent-color: #38bdf8;
+        cursor: pointer;
+      }
       .table-wrap {
         overflow-x: auto;
         max-height: 420px;
@@ -170,6 +234,36 @@
         font-size: 0.75rem;
         margin-top: 12px;
       }
+      .notice {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        max-width: min(420px, calc(100vw - 40px));
+        border: 1px solid #166534;
+        border-radius: 6px;
+        background: #14251d;
+        color: #86efac;
+        padding: 10px 14px;
+        box-shadow: 0 12px 30px rgb(0 0 0 / 35%);
+      }
+      .notice.error {
+        border-color: #7f1d1d;
+        background: #301b1b;
+        color: #fca5a5;
+      }
+      .notice[hidden] {
+        display: none;
+      }
+      @media (max-width: 640px) {
+        .card-heading {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .actions {
+          width: 100%;
+          justify-content: space-between;
+        }
+      }
     </style>
   </head>
   <body>
@@ -235,11 +329,12 @@
                 <th>Type</th>
                 <th>Hero Name</th>
                 <th>Hero Lvl</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody id="userRoomsBody">
               <tr>
-                <td colspan="5" class="empty">No user-room mappings</td>
+                <td colspan="6" class="empty">No user-room mappings</td>
               </tr>
             </tbody>
           </table>
@@ -248,11 +343,26 @@
 
       <!-- Fight Rooms -->
       <div class="card full-width">
-        <h2>Fight Rooms <span class="count" id="roomCount">0</span></h2>
+        <div class="card-heading">
+          <h2>Fight Rooms <span class="count" id="roomCount">0</span></h2>
+          <div class="actions">
+            <span class="selection-count" id="selectionCount">0 selected</span>
+            <button class="danger-button" id="deleteSelectedButton" disabled>
+              Delete selected
+            </button>
+          </div>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
+                <th class="select-cell">
+                  <input
+                    type="checkbox"
+                    id="selectAllRooms"
+                    aria-label="Select all fight rooms"
+                  />
+                </th>
                 <th>Room ID</th>
                 <th>Status</th>
                 <th>Mode</th>
@@ -264,7 +374,7 @@
             </thead>
             <tbody id="roomsBody">
               <tr>
-                <td colspan="7" class="empty">No fight rooms</td>
+                <td colspan="8" class="empty">No fight rooms</td>
               </tr>
             </tbody>
           </table>
@@ -273,12 +383,22 @@
     </div>
 
     <div class="updated-at" id="updatedAt">Waiting for data...</div>
+    <div
+      class="notice"
+      id="notice"
+      role="status"
+      aria-live="polite"
+      hidden
+    ></div>
 
     <script>
       const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";
       const wsUrl = wsProtocol + "//" + location.host + "/dashboard-ws";
       let ws;
       let reconnectTimer;
+      let noticeTimer;
+      let currentRoomIds = [];
+      const selectedRoomIds = new Set();
 
       function connect() {
         ws = new WebSocket(wsUrl);
@@ -304,9 +424,47 @@
         ws.onmessage = e => {
           try {
             const data = JSON.parse(e.data);
+            if (data.type === "dashboardResult") {
+              showNotice(data.message, !data.ok);
+              return;
+            }
             render(data);
           } catch {}
         };
+      }
+
+      function sendCommand(command) {
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          showNotice("Dashboard is not connected", true);
+          return false;
+        }
+        ws.send(JSON.stringify(command));
+        return true;
+      }
+
+      function showNotice(message, isError = false) {
+        const notice = document.getElementById("notice");
+        notice.textContent = message || "Command completed";
+        notice.className = isError ? "notice error" : "notice";
+        notice.hidden = false;
+        clearTimeout(noticeTimer);
+        noticeTimer = setTimeout(() => {
+          notice.hidden = true;
+        }, 4000);
+      }
+
+      function updateSelectionControls() {
+        const selectedCount = selectedRoomIds.size;
+        document.getElementById("selectionCount").textContent =
+          `${selectedCount} selected`;
+        document.getElementById("deleteSelectedButton").disabled =
+          selectedCount === 0;
+
+        const selectAll = document.getElementById("selectAllRooms");
+        selectAll.checked =
+          currentRoomIds.length > 0 && selectedCount === currentRoomIds.length;
+        selectAll.indeterminate =
+          selectedCount > 0 && selectedCount < currentRoomIds.length;
       }
 
       function hpColor(ratio) {
@@ -368,7 +526,7 @@
         const urBody = document.getElementById("userRoomsBody");
         if (userRooms.length === 0) {
           urBody.innerHTML =
-            '<tr><td colspan="5" class="empty">No user-room mappings</td></tr>';
+            '<tr><td colspan="6" class="empty">No user-room mappings</td></tr>';
         } else {
           urBody.innerHTML = userRooms
             .map(
@@ -379,6 +537,7 @@
             <td><span class="badge ${r.isPvp ? "badge-pvp" : "badge-pve"}">${r.isPvp ? "PvP" : "PvE"}</span></td>
             <td>${escapeHtml(r.heroName ?? "—")}</td>
             <td>${r.heroLvl ?? "—"}</td>
+            <td><button class="danger-button compact-button delete-user-room" data-hero-id="${escapeHtml(heroId)}">Delete</button></td>
           </tr>`,
             )
             .join("");
@@ -386,16 +545,21 @@
 
         // Fight Rooms
         const rooms = data.fightRooms || [];
+        currentRoomIds = rooms.map(([id]) => id);
+        for (const roomId of selectedRoomIds) {
+          if (!currentRoomIds.includes(roomId)) selectedRoomIds.delete(roomId);
+        }
         document.getElementById("roomCount").textContent = rooms.length;
         const rBody = document.getElementById("roomsBody");
         if (rooms.length === 0) {
           rBody.innerHTML =
-            '<tr><td colspan="7" class="empty">No fight rooms</td></tr>';
+            '<tr><td colspan="8" class="empty">No fight rooms</td></tr>';
         } else {
           rBody.innerHTML = rooms
             .map(
               ([id, r]) =>
                 `<tr>
+            <td class="select-cell"><input type="checkbox" class="room-checkbox" value="${escapeHtml(id)}" aria-label="Select fight room ${escapeHtml(id)}" ${selectedRoomIds.has(id) ? "checked" : ""}></td>
             <td>${escapeHtml(id ?? "—")}…</td>
             <td><span class="badge badge-${r.status}">${r.status}</span></td>
             <td><span class="badge ${r.isPvp ? "badge-pvp" : "badge-pve"}">${r.isPvp ? "PvP" : "PvE"}</span></td>
@@ -407,10 +571,59 @@
             )
             .join("");
         }
+        updateSelectionControls();
 
         document.getElementById("updatedAt").textContent =
           "Last updated: " + new Date().toLocaleTimeString();
       }
+
+      document.getElementById("userRoomsBody").addEventListener("click", e => {
+        const button = e.target.closest(".delete-user-room");
+        if (!button) return;
+
+        const heroId = button.dataset.heroId;
+        if (
+          confirm(`Remove the room mapping for hero ${heroId}?`) &&
+          sendCommand({ action: "deleteUserRoom", heroId })
+        ) {
+          button.disabled = true;
+        }
+      });
+
+      document.getElementById("roomsBody").addEventListener("change", e => {
+        if (!e.target.matches(".room-checkbox")) return;
+        if (e.target.checked) selectedRoomIds.add(e.target.value);
+        else selectedRoomIds.delete(e.target.value);
+        updateSelectionControls();
+      });
+
+      document
+        .getElementById("selectAllRooms")
+        .addEventListener("change", e => {
+          selectedRoomIds.clear();
+          if (e.target.checked) {
+            for (const roomId of currentRoomIds) selectedRoomIds.add(roomId);
+          }
+          document.querySelectorAll(".room-checkbox").forEach(checkbox => {
+            checkbox.checked = e.target.checked;
+          });
+          updateSelectionControls();
+        });
+
+      document
+        .getElementById("deleteSelectedButton")
+        .addEventListener("click", () => {
+          const roomIds = Array.from(selectedRoomIds);
+          if (
+            roomIds.length > 0 &&
+            confirm(
+              `Permanently delete ${roomIds.length} selected fight room${roomIds.length === 1 ? "" : "s"}?`,
+            ) &&
+            sendCommand({ action: "deleteFightRooms", roomIds })
+          ) {
+            document.getElementById("deleteSelectedButton").disabled = true;
+          }
+        });
 
       connect();
     </script>

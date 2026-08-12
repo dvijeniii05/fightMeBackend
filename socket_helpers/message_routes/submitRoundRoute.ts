@@ -1,14 +1,7 @@
-import { expMap } from "../../constants/expMap";
-import {
-  deleteCopiedBot,
-  updateHeroAfterFight,
-  updateHeroCurrHp,
-} from "../../drizzle/queries/hero";
-import { calculateRoundOutcome } from "../../helpers/calculateDamageHelper";
+import { updateHeroCurrHp } from "../../drizzle/queries/hero";
+import { calcRoundResults } from "../../helpers/calculateDamageHelper";
 import { calculateRestTime } from "../../helpers/calculateRestTime";
-import { calculateExp } from "../../helpers/calculateExpHelper";
-import { calculateSouls } from "../../helpers/calculateSoulsHelper";
-import { calculateShards } from "../../helpers/calculateShardsHelper";
+import { getMatchResults } from "../../helpers/getMatchResults";
 import type { Round } from "../../types/roomType";
 import {
   activeHeroesCache,
@@ -27,6 +20,8 @@ export const submitRoundRoute = async (
       attack: number;
       block: number;
     };
+    attackTime?: number;
+    blockTime?: number;
   },
 ) => {
   /* TODO:
@@ -52,9 +47,7 @@ export const submitRoundRoute = async (
 
         //save attack & block picks into Round [i]
         //We need to check the current roundNumber AND create the roudn with that number if it doesn't exist
-        //Then assign the attackTime & blockTime to actions[] for each player
-        //Maybe upd the actionedPlayers object in the room and make sure to reset it to false once a round is complete OR
-        //OR move these values to the rounds instead of the topLevel of the room
+        //Then assign the block selection to the current round
 
         const existingRound = room.rounds?.find(
           val => val.roundNumber === room.currentRound,
@@ -65,38 +58,46 @@ export const submitRoundRoute = async (
           if (room.isPvp) {
             //PvP fight for 2 human players
             if (existingRound) {
-              //Update existing round while keeping old values
-              const playerTwoActions = {
+              const blockSelection = {
                 playerId: parsedMessage.heroId,
-                attackTime: parsedMessage.selected.attack,
-                attackArea: currUser?.stats.attackArea,
-                blockTime: parsedMessage.selected.block,
-                blockArea: currUser?.stats.blockArea,
+                blockZone: parsedMessage.selected.block,
+                blockTime: parsedMessage.blockTime ?? 0,
               };
 
-              existingRound.actions.push(playerTwoActions);
-              existingRound.actionedPlayers.push({
-                id: parsedMessage.heroId,
-                madeSelection: true,
-              });
-              // console.log("Second_Player_action_commited", existingRound);
+              existingRound.blockSelections.push(blockSelection);
 
-              if (existingRound.actionedPlayers.length === 2) {
+              if (existingRound.blockSelections.length === 2) {
                 console.log("BOTH_ACTIONS_RECORDED");
                 const playerOne = room.players[0];
                 const playerTwo = room.players[1];
+                const playerOneAttack = existingRound.attackSelections.find(
+                  selection => selection.playerId === playerOne.id,
+                )!;
+                const playerTwoAttack = existingRound.attackSelections.find(
+                  selection => selection.playerId === playerTwo.id,
+                )!;
+                const playerOneBlock = existingRound.blockSelections.find(
+                  selection => selection.playerId === playerOne.id,
+                )!;
+                const playerTwoBlock = existingRound.blockSelections.find(
+                  selection => selection.playerId === playerTwo.id,
+                )!;
                 //Calculate outcomes and send to both players
-                const roundOutcome = calculateRoundOutcome(
+                const roundOutcome = calcRoundResults(
                   {
-                    attackTime: existingRound.actions[0].attackTime,
-                    blockTime: existingRound.actions[0].blockTime,
+                    attackZone: playerOneAttack.attackZone,
+                    attackTime: playerOneAttack.attackTime,
+                    blockZone: playerOneBlock.blockZone,
+                    blockTime: playerOneBlock.blockTime,
                     maxHp: playerOne.maxHp,
                     hp: playerOne.hp,
                     ...playerOne.stats,
                   },
                   {
-                    attackTime: existingRound.actions[1].attackTime,
-                    blockTime: existingRound.actions[1].blockTime,
+                    attackZone: playerTwoAttack.attackZone,
+                    attackTime: playerTwoAttack.attackTime,
+                    blockZone: playerTwoBlock.blockZone,
+                    blockTime: playerTwoBlock.blockTime,
                     maxHp: playerTwo.maxHp,
                     hp: playerTwo.hp,
                     ...playerTwo.stats,
@@ -185,15 +186,19 @@ export const submitRoundRoute = async (
               //Create and set a completely new round
               const newRound: Round = {
                 roundNumber: room.currentRound,
-                actions: [
+                attackSelections: [
                   {
                     playerId: parsedMessage.heroId,
-                    attackTime: parsedMessage.selected.attack,
-                    blockTime: parsedMessage.selected.block,
+                    attackZone: parsedMessage.selected.attack,
+                    attackTime: parsedMessage.attackTime ?? 0,
                   },
                 ],
-                actionedPlayers: [
-                  { id: parsedMessage.heroId, madeSelection: true },
+                blockSelections: [
+                  {
+                    playerId: parsedMessage.heroId,
+                    blockZone: parsedMessage.selected.block,
+                    blockTime: parsedMessage.blockTime ?? 0,
+                  },
                 ],
                 results: [],
               };
@@ -217,20 +222,32 @@ export const submitRoundRoute = async (
             const player = room.players[0];
             const bot = room?.players[1];
 
-            const botAttackTime = Math.floor(Math.random() * 5) + 1; //TODO: improve bot logic
-            const botBlockTime = Math.floor(Math.random() * 5) + 1; //TODO: improve bot logic
+            const playerAttack = existingRound?.attackSelections.find(
+              selection => selection.playerId === player.id,
+            );
+            const botAttack = existingRound?.attackSelections.find(
+              selection => selection.playerId === bot.id,
+            );
+            const botBlockZone = Math.floor(Math.random() * 4) + 1; //TODO: improve bot logic
+            const botBlockTime = Math.floor(Math.random() * 5001);
 
             //Calculate outcomes and send to both players
-            const roundOutcome = calculateRoundOutcome(
+            const roundOutcome = calcRoundResults(
               {
-                attackTime: parsedMessage.selected.attack,
-                blockTime: parsedMessage.selected.block,
+                attackZone:
+                  playerAttack?.attackZone ?? parsedMessage.selected.attack,
+                attackTime:
+                  playerAttack?.attackTime ?? parsedMessage.attackTime ?? 0,
+                blockZone: parsedMessage.selected.block,
+                blockTime: parsedMessage.blockTime ?? 0,
                 maxHp: player.maxHp,
                 hp: player.hp,
                 ...player.stats,
               },
               {
-                attackTime: botAttackTime,
+                attackZone: botAttack!.attackZone,
+                attackTime: botAttack!.attackTime,
+                blockZone: botBlockZone,
                 blockTime: botBlockTime,
                 maxHp: bot.maxHp,
                 hp: bot.hp,
@@ -240,21 +257,18 @@ export const submitRoundRoute = async (
 
             const newRound: Round = {
               roundNumber: room.currentRound,
-              actions: [
+              attackSelections: existingRound?.attackSelections ?? [],
+              blockSelections: [
                 {
                   playerId: parsedMessage.heroId,
-                  attackTime: parsedMessage.selected.attack,
-                  blockTime: parsedMessage.selected.block,
+                  blockZone: parsedMessage.selected.block,
+                  blockTime: parsedMessage.blockTime ?? 0,
                 },
                 {
                   playerId: bot.id,
-                  attackTime: botAttackTime,
+                  blockZone: botBlockZone,
                   blockTime: botBlockTime,
                 },
-              ],
-              actionedPlayers: [
-                { id: parsedMessage.heroId, madeSelection: true },
-                { id: bot.id, madeSelection: true },
               ],
               results: [
                 { playerId: player.id, ...roundOutcome.playerOne },
@@ -262,7 +276,11 @@ export const submitRoundRoute = async (
               ],
             };
 
-            room.rounds.unshift(newRound);
+            if (existingRound) {
+              Object.assign(existingRound, newRound);
+            } else {
+              room.rounds.unshift(newRound);
+            }
 
             // console.log("PvE results:", newRound.results);
 
@@ -294,98 +312,7 @@ export const submitRoundRoute = async (
                 player.hp,
               );
 
-              const isResulDraw = player.hp <= 0 && bot.hp <= 0;
-              const winnerId = player.hp <= 0 ? bot.id : player.id;
-
-              await updateHeroCurrHp({
-                heroId: player.id,
-                currHp: player.hp,
-              });
-
-              await deleteCopiedBot(bot.id);
-
-              if (isResulDraw) {
-                //it is a draw
-                //TODO: Update this logic to not give any exp if draw
-                room.matchResult = {
-                  isDraw: true,
-                  exp: 0,
-                };
-
-                await updateHeroCurrHp({
-                  heroId: player.id,
-                  currHp: player.hp,
-                });
-              } else {
-                console.log("WE_HAVE_A_WINNER...");
-
-                //TODO: need to udapte currHp on loss as well!
-
-                //we have a winner
-                const isPlayerWinner = winnerId === player.id;
-                const expAwarded = calculateExp(
-                  isPlayerWinner,
-                  player.lvl,
-                  bot.lvl,
-                  room.isDungeon,
-                );
-                const soulsAwarded = calculateSouls(
-                  isPlayerWinner,
-                  player.lvl,
-                  bot.lvl,
-                  room.isDungeon,
-                );
-                const shardsAwarded =
-                  room.isDungeon && room.shardsType
-                    ? calculateShards(isPlayerWinner, room.shardsType)
-                    : { a: 0, b: 0, c: 0 };
-
-                console.log("RESULT_EXP", expAwarded, room.isDungeon);
-                console.log("RESULT_SOULS", soulsAwarded);
-                console.log("RESULT_SHARDS", shardsAwarded);
-                const isLvlUp =
-                  player.exp + expAwarded >= expMap[player.lvl + 1];
-
-                await updateHeroAfterFight({
-                  heroId: player.id,
-                  exp: player.exp + expAwarded,
-                  lvl: isLvlUp ? player.lvl + 1 : player.lvl,
-                  statsPoints: isLvlUp
-                    ? player.statsPoints + 5
-                    : player.statsPoints,
-                  souls: player.souls + soulsAwarded,
-                  shards: {
-                    a: player.shardsA + shardsAwarded.a,
-                    b: player.shardsB + shardsAwarded.b,
-                    c: player.shardsC + shardsAwarded.c,
-                  },
-                });
-
-                //TODO: should update Hero's Lvl in activeHeroesCache if there is a level up
-                console.log("IS_LVL_UP", isLvlUp, socketHeroOne);
-                isLvlUp && socketHeroOne!.lvl++;
-
-                console.log("DELETING_BOT...", bot);
-
-                //TODO: save the outcome into a separate match history table in DB including both player and bot stats, picks, and the outcome details such as damage dealt, exp awarded etc. This is needed for analytics and also for the player to be able to see their past matches history and details
-                //AND delete this from the socked cache once saved in DB to free up memory
-                //Should run as a daemon i.e. a scheduled function that runs every X minutes and deletes ONLY finished matches from the cache that are already saved in DB AND with a timestamp of at least 5 minutes from the "finsihed status"
-                room.matchResult = {
-                  isDraw: false,
-                  winnerId: winnerId,
-                  winnerName: room.players.find(
-                    player => player.id === winnerId,
-                  )?.name,
-                  exp: expAwarded,
-                  souls: soulsAwarded,
-                  shardsA: shardsAwarded.a,
-                  shardsB: shardsAwarded.b,
-                  shardsC: shardsAwarded.c,
-                };
-
-                //TODO:  add the same should happen in PvP matches
-                userRoomsCache.delete(player.id);
-              }
+              await getMatchResults({ room, player, bot, socketHeroOne });
             }
             //create newRound
             if (!hasMatchFinished) room.currentRound++;

@@ -1,3 +1,10 @@
+# Workspace Relationship
+
+- `fightMeBackend` is the backend for the `strike-forge-abyss` frontend mobile
+  app; treat both as one product.
+- When changing an API or WebSocket contract, inspect and update affected
+  producers and consumers in both repositories.
+
 # Project Context: FightMe Backend
 
 ## 🎯 Project Overview
@@ -6,6 +13,9 @@
 with **Bun** runtime, **TypeScript**, **Drizzle ORM**, and **PostgreSQL**. The
 system supports hero management, PvP/PvE combat, item systems, and real-time
 WebSocket communication.
+
+!! DO NOT BUILD UNIT TESTS FOR THIS PROJECT !! We are on the early stages so the
+logic is subjected to change on every single commit.
 
 ## 🏗️ Architecture Pattern
 

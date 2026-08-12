@@ -31,14 +31,15 @@ type Player = {
 
 export type Round = {
   roundNumber: number;
-  actions: {
+  attackSelections: {
     playerId: string;
-    // healthLeft: number; //OR leave it here???
+    attackZone: number;
     attackTime: number;
+  }[];
+  blockSelections: {
+    playerId: string;
+    blockZone: number;
     blockTime: number;
-
-    //TODO: to add magic related fields
-    // isMulticast: boolean;
   }[];
   results: {
     playerId: string;
@@ -52,16 +53,6 @@ export type Round = {
     block: string; //in %
     attackArea: number;
     blockArea: number;
-  }[];
-
-  //TODO: Might be an overkill??
-  // actionedPlayers: {
-  //   playerOne: boolean; //false by default, true once picked an action
-  //   playerTwo: boolean; //false by default, true once picked an action
-  // };
-  actionedPlayers: {
-    id: string;
-    madeSelection: boolean;
   }[];
 };
 
