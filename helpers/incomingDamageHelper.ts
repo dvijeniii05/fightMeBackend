@@ -15,10 +15,11 @@ export const incomingDamageHelper = (props: Props) => {
 
   const hasValidTiming =
     Number.isFinite(props.blockTime) && Number.isFinite(props.attackTime);
+
   const isBlocked =
     props.blockZone === props.attackZone &&
     hasValidTiming &&
-    Math.abs(props.blockTime - props.attackTime) <= BLOCK_TOLERANCE_MS;
+    props.attackTime - props.blockTime === BLOCK_TOLERANCE_MS;
 
   //Full damage as no block involved
   if (isBlocked)
