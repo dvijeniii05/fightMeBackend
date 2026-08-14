@@ -14,8 +14,6 @@ import { heroSxma } from "./hero";
 export type itemStatsType = {
   hp?: number;
   damage?: number;
-  attackArea?: number;
-  blockArea?: number;
   critChance?: number;
   critMultiplier?: number;
   evadeChance?: number;

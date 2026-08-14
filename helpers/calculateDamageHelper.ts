@@ -126,8 +126,8 @@ export const calcRoundResults = (
       outgoingDamage: incomingDamageB.damage,
       block: incomingDamageA.block,
       isBlocked: incomingDamageA.isBlocked,
-      attackArea: A.attackZone,
-      blockArea: A.blockZone,
+      attackZne: A.attackZone,
+      blockZne: A.blockZone,
     },
     playerTwo: {
       hp: hpLeftB,
@@ -138,8 +138,8 @@ export const calcRoundResults = (
       outgoingDamage: incomingDamageA.damage,
       block: incomingDamageB.block,
       isBlocked: incomingDamageB.isBlocked,
-      attackArea: B.attackZone,
-      blockArea: B.blockZone,
+      attackZne: B.attackZone,
+      blockZne: B.blockZone,
     },
   };
 };

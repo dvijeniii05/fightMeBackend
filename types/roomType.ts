@@ -7,8 +7,6 @@ type Player = {
   maxHp: number; //initial Health
   stats: {
     baseDamageBoost: number;
-    attackArea: number;
-    blockArea: number;
     critChance: number;
     critMultiplier: number;
     evadeChance: number;
@@ -51,8 +49,8 @@ export type Round = {
     isFast?: boolean;
     isBlocked?: boolean;
     block: string; //in %
-    attackArea: number;
-    blockArea: number;
+    attackZne: number;
+    blockZne: number;
   }[];
 };
 

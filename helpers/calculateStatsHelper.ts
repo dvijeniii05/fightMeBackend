@@ -19,8 +19,6 @@ export interface StatsProps {
 export interface GearStatsProps {
   hp: number;
   damage: number;
-  attackArea: number;
-  blockArea: number;
   critChance: number;
   critMultiplier: number;
   evadeChance: number;
@@ -55,8 +53,6 @@ export const totalGearStats = (
       return {
         hp: acc.hp + (stats.hp || 0),
         damage: acc.damage + (stats.damage || 0),
-        attackArea: acc.attackArea + (stats.attackArea || 0),
-        blockArea: acc.blockArea + (stats.blockArea || 0),
         critChance: acc.critChance + (stats.critChance || 0),
         critMultiplier: acc.critMultiplier + (stats.critMultiplier || 0),
         evadeChance: acc.evadeChance + (stats.evadeChance || 0),
@@ -67,8 +63,6 @@ export const totalGearStats = (
     {
       hp: 0,
       damage: 0,
-      attackArea: 0,
-      blockArea: 0,
       critChance: 0,
       critMultiplier: 0,
       evadeChance: 0,
@@ -94,8 +88,6 @@ export const calculateStatsHelper = (
     : {
         hp: 0,
         damage: 0,
-        attackArea: 0,
-        blockArea: 0,
         critChance: 0,
         critMultiplier: 0,
         evadeChance: 0,
@@ -112,13 +104,6 @@ export const calculateStatsHelper = (
   const knowledge = capped(stats.knowledge);
 
   const baseDamageBoost = Math.round(strength * 1.5 + gearStats.damage);
-  const attackArea = Math.round(strength * 0.01 + gearStats.attackArea);
-
-  //TODO: remove temp blockArea once agreed on formula for block-area
-  const tempBlockArea = 4;
-  const blockArea = Math.round(
-    strength * 0.1 + health * 0.1 + gearStats.blockArea,
-  );
   const hp = Math.round(health * 10 + gearStats.hp);
 
   const critChance = Math.round(mastery * 0.3 * 10) / 10 + gearStats.critChance;
