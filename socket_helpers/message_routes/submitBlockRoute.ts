@@ -84,11 +84,29 @@ export const submitBlockRoute = async (
       bot &&
       !round.blockSelections.some(selection => selection.playerId === bot.id)
     ) {
-      //TODO: bot's block time should be more forgiving. Maybe should have a separate block calculation
+      const playerAttack = round.attackSelections.find(
+        selection => selection.playerId === parsedMessage.heroId,
+      );
+
+      if (!playerAttack) {
+        ws.send(
+          JSON.stringify({
+            type: "error",
+            message: "Cannot select bot block before player attack",
+          }),
+        );
+        return;
+      }
+
+      const shouldBlock = Math.random() < 0.5;
+      const missedZoneOffset = Math.floor(Math.random() * 3) + 1;
+
       round.blockSelections.push({
         playerId: bot.id,
-        blockZone: Math.floor(Math.random() * 4) + 1,
-        blockTime: Math.floor(Math.random() * 5001),
+        blockZone: shouldBlock
+          ? playerAttack.attackZone
+          : ((playerAttack.attackZone - 1 + missedZoneOffset) % 4) + 1,
+        blockTime: playerAttack.attackTime,
       });
     }
   }
