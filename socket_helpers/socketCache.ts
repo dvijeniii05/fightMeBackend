@@ -1,5 +1,5 @@
 import type { ActiveHeroesType } from "../types/activeHeroesType";
-import type { RoomType, UserRoomType } from "../types/roomType";
+import type { FableRoomType, RoomType, UserRoomType } from "../types/roomType";
 
 // temp. local solution to store user session on runtime
 export const userSockets = new Map<
@@ -14,6 +14,9 @@ export const userSockets = new Map<
   */
 }
 export const fightRoomsCache = new Map<string, RoomType>();
+
+// Kept separate until legacy handlers are retired or explicitly version-aware.
+export const fableFightRoomsCache = new Map<string, FableRoomType>();
 
 {
   /*

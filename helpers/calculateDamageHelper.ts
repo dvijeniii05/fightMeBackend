@@ -3,6 +3,7 @@ import { isItCritHelper } from "./critHelpers";
 import { isItEvadedHelper } from "./evasionHelper";
 import { isItFastHelper } from "./fastHelper";
 import { incomingDamageHelper } from "./incomingDamageHelper";
+import { resolveStrike } from "./resolveStrike";
 
 export const calculateDamageHelper = (to: any, from: any) => {
   const critChance = from.stats.crit * 0.15 + from.buffs.addCritChance; //percent
@@ -82,62 +83,62 @@ export const calcRoundResults = (
   const isFastA = isItFastHelper(A.fastChance);
   const isFastB = isItFastHelper(B.fastChance);
 
-  const potentialDamageA = Math.round(
-    A.baseDamageBoost * (isCritA ? A.critMultiplier : 1) * (isFastA ? 2.5 : 1),
-  );
-  const potentialDamageB = Math.round(
-    B.baseDamageBoost * (isCritB ? B.critMultiplier : 1) * (isFastB ? 2.5 : 1),
-  );
-
-  //Below relates to block calculation. Is it blocked? If yes, then what is the amount.
-
-  const incomingDamageA = incomingDamageHelper({
-    blockZone: A.blockZone,
-    blockTime: A.blockTime,
-    attackZone: B.attackZone,
-    attackTime: B.attackTime,
-    baseIncomingDamage: B.baseDamageBoost,
-    potentialIncomingDamage: potentialDamageB,
+  const strikeFromA = resolveStrike({
+    attacker: { stats: A },
+    defender: { hp: B.hp, stats: B },
+    skillId: "basic",
+    defense: {
+      blockZone: B.blockZone,
+      blockTime: B.blockTime,
+      attackZone: A.attackZone,
+      attackTime: A.attackTime,
+    },
+    outcomes: {
+      isCrit: isCritA,
+      isEvade: isEvadeB,
+      isFast: isFastA,
+    },
   });
 
-  const incomingDamageB = incomingDamageHelper({
-    blockZone: B.blockZone,
-    blockTime: B.blockTime,
-    attackZone: A.attackZone,
-    attackTime: A.attackTime,
-    baseIncomingDamage: A.baseDamageBoost,
-    potentialIncomingDamage: potentialDamageA,
+  const strikeFromB = resolveStrike({
+    attacker: { stats: B },
+    defender: { hp: A.hp, stats: A },
+    skillId: "basic",
+    defense: {
+      blockZone: A.blockZone,
+      blockTime: A.blockTime,
+      attackZone: B.attackZone,
+      attackTime: B.attackTime,
+    },
+    outcomes: {
+      isCrit: isCritB,
+      isEvade: isEvadeA,
+      isFast: isFastB,
+    },
   });
-
-  const hpLeftA = Math.round(
-    Math.max(0, A.hp - (isEvadeA ? 0 : incomingDamageA.damage)),
-  );
-  const hpLeftB = Math.round(
-    Math.max(0, B.hp - (isEvadeB ? 0 : incomingDamageB.damage)),
-  );
 
   return {
     playerOne: {
-      hp: hpLeftA,
+      hp: strikeFromB.resultingHp,
       isCrit: isCritA,
       isEvade: isEvadeA,
       isFastA: isFastA,
-      incomingDamage: incomingDamageA.damage,
-      outgoingDamage: incomingDamageB.damage,
-      block: incomingDamageA.block,
-      isBlocked: incomingDamageA.isBlocked,
+      incomingDamage: strikeFromB.damageBeforeEvade,
+      outgoingDamage: strikeFromA.damageBeforeEvade,
+      block: strikeFromB.block,
+      isBlocked: strikeFromB.isBlocked,
       attackZne: A.attackZone,
       blockZne: A.blockZone,
     },
     playerTwo: {
-      hp: hpLeftB,
+      hp: strikeFromA.resultingHp,
       isCrit: isCritB,
       isEvade: isEvadeB,
       isFastA: isFastB,
-      incomingDamage: incomingDamageB.damage,
-      outgoingDamage: incomingDamageA.damage,
-      block: incomingDamageB.block,
-      isBlocked: incomingDamageB.isBlocked,
+      incomingDamage: strikeFromA.damageBeforeEvade,
+      outgoingDamage: strikeFromB.damageBeforeEvade,
+      block: strikeFromA.block,
+      isBlocked: strikeFromA.isBlocked,
       attackZne: B.attackZone,
       blockZne: B.blockZone,
     },

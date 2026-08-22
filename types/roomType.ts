@@ -1,6 +1,14 @@
 import type { InventoryItemType } from "./itemsType";
+import type {
+  BlockTier,
+  ExchangeIndex,
+  ExchangeState,
+  FableExchangeResolvedPayload,
+  FightDirection,
+  SkillId,
+} from "./fableProtocol";
 
-type Player = {
+export type Player = {
   id: string;
   name: string;
   hp: number; //current Health
@@ -86,6 +94,51 @@ export type RoomType = {
   isPvp: boolean;
   isDungeon?: boolean;
   shardsType?: string; //  a = greenForge, b = blueForge, c = purpleForge
+};
+
+export type FablePlayer = Player & {
+  stamina: number;
+  maxStamina: number;
+  nextStrikeBuff?: {
+    damageMult: number;
+  };
+};
+
+export type FableExchange = {
+  exchangeIndex: ExchangeIndex;
+  attackerId: string;
+  defenderId: string;
+  state: ExchangeState;
+  strike: {
+    skillId: SkillId;
+    direction: FightDirection;
+    committedAtMs: number;
+  } | null;
+  defense: {
+    direction: FightDirection;
+    blockOffsetMs: number;
+    committedAtMs: number;
+  } | null;
+  blockTier: BlockTier | null;
+  deadlines: {
+    attackAtMs: number | null;
+    blockAtMs: number | null;
+  };
+  resolution: FableExchangeResolvedPayload | null;
+};
+
+export type FableRound = {
+  roundNumber: number;
+  activeExchangeIndex: ExchangeIndex;
+  exchanges: [FableExchange, FableExchange];
+  results: FableExchangeResolvedPayload[];
+};
+
+export type FableRoomType = Omit<RoomType, "isPvp" | "players" | "rounds"> & {
+  combatVersion: "fable_v2";
+  isPvp: false;
+  players: [FablePlayer, FablePlayer];
+  rounds: FableRound[];
 };
 
 export type UserRoomType = {
