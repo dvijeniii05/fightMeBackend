@@ -113,6 +113,7 @@ export type FableExchange = {
     skillId: SkillId;
     direction: FightDirection;
     committedAtMs: number;
+    damageBuff: { damageMult: number } | null;
   } | null;
   defense: {
     direction: FightDirection;

@@ -5,6 +5,15 @@ export type SkillId = "basic" | "precise" | "heavy";
 export type BlockTier = "perfect" | "basic" | "none";
 export type ExchangeState = "awaiting_attack" | "awaiting_block" | "resolved";
 export type ExchangeIndex = 0 | 1;
+export type StrikeCommitRejectionReason =
+  | "invalid_room"
+  | "identity_mismatch"
+  | "stale_exchange"
+  | "not_attacker"
+  | "duplicate_commit"
+  | "invalid_direction"
+  | "unknown_skill"
+  | "insufficient_stamina";
 
 type FableExchangeMessageBase = {
   roomId: string;
@@ -34,6 +43,11 @@ export type FableExchangeStartedMessage = FableExchangeMessageBase & {
 export type FableIncomingStrikeMessage = FableExchangeMessageBase & {
   type: "incomingStrike";
   direction: FightDirection;
+};
+
+export type FableStrikeCommitRejectedMessage = FableExchangeMessageBase & {
+  type: "strikeCommitRejected";
+  reason: StrikeCommitRejectionReason;
 };
 
 export type FableExchangeResolvedPayload = {
@@ -70,6 +84,7 @@ export type FableClientMessage =
 export type FableServerMessage =
   | FableExchangeStartedMessage
   | FableIncomingStrikeMessage
+  | FableStrikeCommitRejectedMessage
   | FableExchangeResolvedMessage
   | FableRoundResolvedMessage;
 
@@ -107,6 +122,13 @@ export type FableProtocolExamples = [
     roundNumber: 1;
     exchangeIndex: 0;
     direction: "up";
+  }>,
+  ProtocolExample<{
+    type: "strikeCommitRejected";
+    roomId: "room-1";
+    roundNumber: 1;
+    exchangeIndex: 0;
+    reason: "insufficient_stamina";
   }>,
   ProtocolExample<{
     type: "exchangeResolved";

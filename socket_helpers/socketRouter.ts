@@ -5,6 +5,7 @@ import { createRoomRoute } from "./message_routes/createRoomRoute";
 import { currentHpRoute } from "./message_routes/currentHpRoute";
 import { joinRoomRoute } from "./message_routes/joinRoomRoute";
 import { reconnectRoomRoute } from "./message_routes/reconnectRoomRoute";
+import { commitStrikeRoute } from "./message_routes/commitStrikeRoute";
 import { submitAttackRoute } from "./message_routes/submitAttackRoute";
 import { submitBlockRoute } from "./message_routes/submitBlockRoute";
 import { submitRoundRoute } from "./message_routes/submitRoundRoute";
@@ -39,6 +40,8 @@ export const messageRouter = async (
       return activeHeroesRoute(server, ws, rest);
     case "currentHp":
       return currentHpRoute(ws, rest);
+    case "commitStrike":
+      return commitStrikeRoute(server, ws, rest);
     default:
       ws.send(JSON.stringify({ type: "error", message: "Unknown type" }));
   }
