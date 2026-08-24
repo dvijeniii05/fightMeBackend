@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { DEFENSE_COMMIT_DEADLINE_MS } from "../constants/combatTiming";
 import { initializeFablePveRoom } from "../helpers/initializeFablePveRoom";
+import { clearFableDefenseDeadline } from "../helpers/resolveFableExchange";
 import { commitStrikeRoute } from "../socket_helpers/message_routes/commitStrikeRoute";
 import {
   fableFightRoomsCache,
@@ -211,6 +212,7 @@ for (const rejectionCase of rejectionCases) {
 
 fableFightRoomsCache.clear();
 userSockets.delete("bot");
+clearFableDefenseDeadline(baseCommit.roomId, 1, 0);
 
 console.log({
   validCommit: {

@@ -1,5 +1,6 @@
 import { DEFENSE_COMMIT_DEADLINE_MS } from "../../constants/combatTiming";
 import { COMBAT_SKILLS } from "../../constants/skills";
+import { scheduleFableDefenseDeadline } from "../../helpers/resolveFableExchange";
 import type {
   FableCommitStrikeMessage,
   FableExchangeStartedMessage,
@@ -114,6 +115,13 @@ export const commitStrikeRoute = (
   exchange.state = "awaiting_block";
   exchange.deadlines.attackAtMs = null;
   exchange.deadlines.blockAtMs = committedAtMs + DEFENSE_COMMIT_DEADLINE_MS;
+  scheduleFableDefenseDeadline(
+    server,
+    room.id,
+    round.roundNumber,
+    exchange.exchangeIndex,
+    exchange.deadlines.blockAtMs,
+  );
 
   const exchangeStarted: FableExchangeStartedMessage = {
     type: "exchangeStarted",

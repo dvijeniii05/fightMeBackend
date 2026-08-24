@@ -14,6 +14,15 @@ export type StrikeCommitRejectionReason =
   | "invalid_direction"
   | "unknown_skill"
   | "insufficient_stamina";
+export type DefenseCommitRejectionReason =
+  | "invalid_room"
+  | "identity_mismatch"
+  | "stale_exchange"
+  | "not_defender"
+  | "duplicate_commit"
+  | "invalid_direction"
+  | "invalid_offset"
+  | "deadline_expired";
 
 type FableExchangeMessageBase = {
   roomId: string;
@@ -48,6 +57,11 @@ export type FableIncomingStrikeMessage = FableExchangeMessageBase & {
 export type FableStrikeCommitRejectedMessage = FableExchangeMessageBase & {
   type: "strikeCommitRejected";
   reason: StrikeCommitRejectionReason;
+};
+
+export type FableDefenseCommitRejectedMessage = FableExchangeMessageBase & {
+  type: "defenseCommitRejected";
+  reason: DefenseCommitRejectionReason;
 };
 
 export type FableExchangeResolvedPayload = {
@@ -85,6 +99,7 @@ export type FableServerMessage =
   | FableExchangeStartedMessage
   | FableIncomingStrikeMessage
   | FableStrikeCommitRejectedMessage
+  | FableDefenseCommitRejectedMessage
   | FableExchangeResolvedMessage
   | FableRoundResolvedMessage;
 
@@ -129,6 +144,13 @@ export type FableProtocolExamples = [
     roundNumber: 1;
     exchangeIndex: 0;
     reason: "insufficient_stamina";
+  }>,
+  ProtocolExample<{
+    type: "defenseCommitRejected";
+    roomId: "room-1";
+    roundNumber: 1;
+    exchangeIndex: 0;
+    reason: "invalid_offset";
   }>,
   ProtocolExample<{
     type: "exchangeResolved";
