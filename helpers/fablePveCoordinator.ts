@@ -12,6 +12,7 @@ import {
   BOT_DIRECTION_MATCH_CHANCE,
 } from "../constants/fableBot";
 import {
+  activeHeroesCache,
   fableFightRoomsCache,
   userSockets,
 } from "../socket_helpers/socketCache";
@@ -28,6 +29,7 @@ import type {
   FableRoomType,
   FableRound,
 } from "../types/roomType";
+import { getMatchResults } from "./getMatchResults";
 import { initializeFablePveRound } from "./initializeFablePveRoom";
 import {
   clearFableDefenseDeadline,
@@ -41,6 +43,9 @@ const DIRECTIONS: readonly FightDirection[] = ["up", "right", "down", "left"];
 const attackDeadlineTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const transitionTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const coordinatedRoomIds = new Set<string>();
+const matchFinalizationPromises = new Map<string, Promise<boolean>>();
+
+type PersistMatchResults = typeof getMatchResults;
 
 const getStepKey = (
   roomId: string,
@@ -335,12 +340,17 @@ const scheduleFableTransition = (
     }
 
     transitionTimers.delete(key);
-    advanceFablePveRoom(
+    void advanceFablePveRoom(
       server,
       room.id,
       round.roundNumber,
       exchange.exchangeIndex,
-    );
+    ).catch(error => {
+      console.error(
+        `[fable] Failed to advance room ${room.id} after exchange resolution`,
+        error,
+      );
+    });
   };
 
   transitionTimers.set(
@@ -372,11 +382,71 @@ export const handleFableExchangeResolved = (
   scheduleFableTransition(server, room, round, exchange);
 };
 
-export const advanceFablePveRoom = (
+export const finalizeFablePveMatch = (
+  server: Bun.Server,
+  roomId: string,
+  persistMatchResults: PersistMatchResults = getMatchResults,
+) => {
+  const existingFinalization = matchFinalizationPromises.get(roomId);
+  if (existingFinalization) return existingFinalization;
+
+  const room = fableFightRoomsCache.get(roomId);
+  const round = room?.rounds.find(
+    item => item.roundNumber === room.currentRound,
+  );
+  const finalExchange = round?.exchanges[1];
+  if (
+    !room ||
+    !round ||
+    !finalExchange ||
+    room.status !== "active" ||
+    room.matchResult ||
+    round.activeExchangeIndex !== 1 ||
+    finalExchange.state !== "resolved" ||
+    !finalExchange.resolution ||
+    !room.players.some(player => player.hp <= 0)
+  ) {
+    return Promise.resolve(false);
+  }
+
+  room.status = "finished";
+  stopFablePveCoordinator(room.id);
+
+  const finalization = (async () => {
+    const [player, bot] = room.players;
+    const activePlayer = activeHeroesCache.get(player.id);
+    if (activePlayer) activePlayer.currHp = player.hp;
+
+    await persistMatchResults({
+      room,
+      player,
+      bot,
+      socketHeroOne: activePlayer,
+    });
+
+    server.publish(
+      room.id,
+      JSON.stringify({
+        type: "personal_room_update",
+        data: room,
+      }),
+    );
+    deleteFablePveRoom(room.id);
+    return true;
+  })().finally(() => {
+    matchFinalizationPromises.delete(room.id);
+  });
+
+  matchFinalizationPromises.set(room.id, finalization);
+  return finalization;
+};
+
+export const advanceFablePveRoom = async (
   server: Bun.Server,
   roomId: string,
   roundNumber: number,
   exchangeIndex: 0 | 1,
+  persistMatchResults: PersistMatchResults = getMatchResults,
 ) => {
   const key = getStepKey(roomId, roundNumber, exchangeIndex);
   const timer = transitionTimers.get(key);
@@ -415,8 +485,7 @@ export const advanceFablePveRoom = (
   server.publish(room.id, JSON.stringify(roundResolved));
 
   if (room.players.some(player => player.hp <= 0)) {
-    stopFablePveCoordinator(room.id);
-    return true;
+    return finalizeFablePveMatch(server, room.id, persistMatchResults);
   }
 
   const nextRoundNumber = round.roundNumber + 1;

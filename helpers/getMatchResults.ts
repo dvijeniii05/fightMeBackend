@@ -5,13 +5,16 @@ import {
   updateHeroCurrHp,
 } from "../drizzle/queries/hero";
 import type { ActiveHeroesType } from "../types/activeHeroesType";
-import type { RoomType } from "../types/roomType";
+import type { Player, RoomType } from "../types/roomType";
 import { userRoomsCache } from "../socket_helpers/socketCache";
 import { calculateExp } from "./calculateExpHelper";
 import { calculateShards } from "./calculateShardsHelper";
 import { calculateSouls } from "./calculateSoulsHelper";
 
-type Player = RoomType["players"][number];
+type MatchResultRoom = Pick<
+  RoomType,
+  "isDungeon" | "matchResult" | "players" | "shardsType"
+>;
 
 export const getMatchResults = async ({
   room,
@@ -19,7 +22,7 @@ export const getMatchResults = async ({
   bot,
   socketHeroOne,
 }: {
-  room: RoomType;
+  room: MatchResultRoom;
   player: Player;
   bot: Player;
   socketHeroOne?: ActiveHeroesType;
@@ -41,11 +44,6 @@ export const getMatchResults = async ({
       isDraw: true,
       exp: 0,
     };
-
-    await updateHeroCurrHp({
-      heroId: player.id,
-      currHp: player.hp,
-    });
   } else {
     console.log("WE_HAVE_A_WINNER...");
 
@@ -90,7 +88,7 @@ export const getMatchResults = async ({
 
     //TODO: should update Hero's Lvl in activeHeroesCache if there is a level up
     console.log("IS_LVL_UP", isLvlUp, socketHeroOne);
-    isLvlUp && socketHeroOne!.lvl++;
+    if (isLvlUp && socketHeroOne) socketHeroOne.lvl++;
 
     console.log("DELETING_BOT...", bot);
 
@@ -107,8 +105,8 @@ export const getMatchResults = async ({
       shardsB: shardsAwarded.b,
       shardsC: shardsAwarded.c,
     };
-
-    //TODO:  add the same should happen in PvP matches
-    userRoomsCache.delete(player.id);
   }
+
+  //TODO:  add the same should happen in PvP matches
+  userRoomsCache.delete(player.id);
 };
