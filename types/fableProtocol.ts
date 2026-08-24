@@ -3,6 +3,7 @@ export type CombatVersion = "legacy" | "fable_v2";
 export type FightDirection = "up" | "right" | "down" | "left";
 export type SkillId = "basic" | "precise" | "heavy";
 export type BlockTier = "perfect" | "basic" | "none";
+export type FableForfeitReason = "attack_timeout";
 export type ExchangeState = "awaiting_attack" | "awaiting_block" | "resolved";
 export type ExchangeIndex = 0 | 1;
 export type StrikeCommitRejectionReason =
@@ -66,8 +67,8 @@ export type FableDefenseCommitRejectedMessage = FableExchangeMessageBase & {
 
 export type FableExchangeResolvedPayload = {
   exchangeIndex: ExchangeIndex;
-  skillId: SkillId;
-  attackZone: FightDirection;
+  skillId: SkillId | null;
+  attackZone: FightDirection | null;
   blockZone: FightDirection | null;
   blockTier: BlockTier;
   isCrit: boolean;
@@ -75,6 +76,7 @@ export type FableExchangeResolvedPayload = {
   damage: number;
   hp: Record<string, number>;
   stamina: Record<string, number>;
+  forfeitReason?: FableForfeitReason;
   parryBuff?: { playerId: string };
 };
 

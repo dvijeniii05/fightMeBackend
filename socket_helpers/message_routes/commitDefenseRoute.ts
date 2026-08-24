@@ -4,6 +4,7 @@ import type {
   FableDefenseCommitRejectedMessage,
   FightDirection,
 } from "../../types/fableProtocol";
+import { handleFableExchangeResolved } from "../../helpers/fablePveCoordinator";
 import { resolveFableExchange } from "../../helpers/resolveFableExchange";
 import { fableFightRoomsCache } from "../socketCache";
 
@@ -104,7 +105,7 @@ export const commitDefenseRoute = (
     return;
   }
 
-  resolveFableExchange({
+  const resolution = resolveFableExchange({
     server,
     room,
     round,
@@ -115,4 +116,5 @@ export const commitDefenseRoute = (
       committedAtMs: Date.now(),
     },
   });
+  if (resolution) handleFableExchangeResolved(server, room, round, exchange);
 };

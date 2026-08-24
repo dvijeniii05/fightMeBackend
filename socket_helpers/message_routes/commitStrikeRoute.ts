@@ -1,5 +1,11 @@
 import { DEFENSE_COMMIT_DEADLINE_MS } from "../../constants/combatTiming";
 import { COMBAT_SKILLS } from "../../constants/skills";
+import {
+  clearFableAttackDeadline,
+  handleFableExchangeResolved,
+  isFablePveCoordinatorRunning,
+  resolveFableBotDefense,
+} from "../../helpers/fablePveCoordinator";
 import { scheduleFableDefenseDeadline } from "../../helpers/resolveFableExchange";
 import type {
   FableCommitStrikeMessage,
@@ -104,6 +110,7 @@ export const commitStrikeRoute = (
     ? { ...attacker.nextStrikeBuff }
     : null;
 
+  clearFableAttackDeadline(room.id, round.roundNumber, exchange.exchangeIndex);
   attacker.stamina -= skill.cost;
   delete attacker.nextStrikeBuff;
   exchange.strike = {
@@ -121,6 +128,7 @@ export const commitStrikeRoute = (
     round.roundNumber,
     exchange.exchangeIndex,
     exchange.deadlines.blockAtMs,
+    handleFableExchangeResolved,
   );
 
   const exchangeStarted: FableExchangeStartedMessage = {
@@ -131,6 +139,14 @@ export const commitStrikeRoute = (
     attackerId: exchange.attackerId,
   };
   server.publish(room.id, JSON.stringify(exchangeStarted));
+
+  if (
+    isFablePveCoordinatorRunning(room.id) &&
+    exchange.defenderId === room.players[1].id
+  ) {
+    resolveFableBotDefense(server, room, round, exchange);
+    return;
+  }
 
   const defenderSocket = userSockets.get(exchange.defenderId);
   if (defenderSocket) {

@@ -1,0 +1,3 @@
+export const BOT_DIRECTION_MATCH_CHANCE = 0.5;
+export const BOT_BLOCK_OFFSET_MIN_MS = 0;
+export const BOT_BLOCK_OFFSET_MAX_MS = 400;

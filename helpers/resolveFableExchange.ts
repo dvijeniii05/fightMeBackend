@@ -18,6 +18,12 @@ import type {
 import { resolveStrike } from "./resolveStrike";
 
 type CommittedDefense = NonNullable<FableExchange["defense"]>;
+type ExchangeResolvedHandler = (
+  server: Bun.Server,
+  room: FableRoomType,
+  round: FableRound,
+  exchange: FableExchange,
+) => void;
 
 const defenseDeadlineTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
@@ -47,6 +53,22 @@ export const clearFableDefenseDeadline = (
   const timer = defenseDeadlineTimers.get(key);
   if (timer) clearTimeout(timer);
   defenseDeadlineTimers.delete(key);
+};
+
+export const clearFableRoomDefenseDeadlines = (roomId: string) => {
+  const keyPrefix = `${roomId}:`;
+  for (const [key, timer] of defenseDeadlineTimers) {
+    if (!key.startsWith(keyPrefix)) continue;
+    clearTimeout(timer);
+    defenseDeadlineTimers.delete(key);
+  }
+};
+
+export const inspectFableRoomDefenseDeadlines = (roomId: string) => {
+  const keyPrefix = `${roomId}:`;
+  return [...defenseDeadlineTimers.keys()].filter(key =>
+    key.startsWith(keyPrefix),
+  ).length;
 };
 
 export const resolveFableExchange = ({
@@ -146,6 +168,7 @@ export const scheduleFableDefenseDeadline = (
   roundNumber: number,
   exchangeIndex: 0 | 1,
   deadlineAtMs: number,
+  onResolved?: ExchangeResolvedHandler,
 ) => {
   clearFableDefenseDeadline(roomId, roundNumber, exchangeIndex);
   const key = getDeadlineKey(roomId, roundNumber, exchangeIndex);
@@ -166,7 +189,14 @@ export const scheduleFableDefenseDeadline = (
     const exchange = round?.exchanges[exchangeIndex];
     if (!room || !round || !exchange) return;
 
-    resolveFableExchange({ server, room, round, exchange, defense: null });
+    const resolution = resolveFableExchange({
+      server,
+      room,
+      round,
+      exchange,
+      defense: null,
+    });
+    if (resolution) onResolved?.(server, room, round, exchange);
   };
 
   defenseDeadlineTimers.set(
