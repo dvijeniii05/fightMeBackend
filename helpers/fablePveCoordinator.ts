@@ -235,6 +235,22 @@ const publishBotStrike = (
   defenderSocket.send(JSON.stringify(incomingStrike));
 };
 
+const publishPlayerAttackOpened = (
+  server: Bun.Server,
+  room: FableRoomType,
+  round: FableRound,
+) => {
+  const exchange = round.exchanges[0];
+  const exchangeStarted: FableExchangeStartedMessage = {
+    type: "exchangeStarted",
+    roomId: room.id,
+    roundNumber: round.roundNumber,
+    exchangeIndex: exchange.exchangeIndex,
+    attackerId: exchange.attackerId,
+  };
+  server.publish(room.id, JSON.stringify(exchangeStarted));
+};
+
 const commitFableBotStrike = (
   server: Bun.Server,
   room: FableRoomType,
@@ -505,6 +521,7 @@ export const advanceFablePveRoom = async (
     nextRound.exchanges[0].deadlines.attackAtMs ??
       Date.now() + ATTACK_PICK_DEADLINE_MS,
   );
+  publishPlayerAttackOpened(server, room, nextRound);
   return true;
 };
 
@@ -544,6 +561,7 @@ export const startFablePveCoordinator = (
       exchange.exchangeIndex,
       deadlineAtMs,
     );
+    publishPlayerAttackOpened(server, room, round);
   } else if (
     exchange.state === "awaiting_block" &&
     exchange.deadlines.blockAtMs

@@ -55,6 +55,13 @@ export type FableIncomingStrikeMessage = FableExchangeMessageBase & {
   direction: FightDirection;
 };
 
+export type FableStrikeCommittedMessage = FableExchangeMessageBase & {
+  type: "strikeCommitted";
+  skillId: SkillId;
+  direction: FightDirection;
+  stamina: number;
+};
+
 export type FableStrikeCommitRejectedMessage = FableExchangeMessageBase & {
   type: "strikeCommitRejected";
   reason: StrikeCommitRejectionReason;
@@ -100,6 +107,7 @@ export type FableClientMessage =
 export type FableServerMessage =
   | FableExchangeStartedMessage
   | FableIncomingStrikeMessage
+  | FableStrikeCommittedMessage
   | FableStrikeCommitRejectedMessage
   | FableDefenseCommitRejectedMessage
   | FableExchangeResolvedMessage
@@ -139,6 +147,15 @@ export type FableProtocolExamples = [
     roundNumber: 1;
     exchangeIndex: 0;
     direction: "up";
+  }>,
+  ProtocolExample<{
+    type: "strikeCommitted";
+    roomId: "room-1";
+    roundNumber: 1;
+    exchangeIndex: 0;
+    skillId: "precise";
+    direction: "up";
+    stamina: 70;
   }>,
   ProtocolExample<{
     type: "strikeCommitRejected";

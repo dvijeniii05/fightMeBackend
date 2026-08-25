@@ -3,10 +3,15 @@ import {
   ATTACK_PICK_DEADLINE_MS,
   FIGHT_STAMINA,
 } from "../constants/combatTiming";
-import { initializeFablePveRoom } from "../helpers/initializeFablePveRoom";
+import { activateFablePveRoom } from "../helpers/activateFablePveRoom";
+import {
+  deleteFablePveRoom,
+  inspectFablePveCoordinator,
+} from "../helpers/fablePveCoordinator";
 import {
   fableFightRoomsCache,
   fightRoomsCache,
+  userRoomsCache,
 } from "../socket_helpers/socketCache";
 import type { Player, RoomType } from "../types/roomType";
 
@@ -52,8 +57,27 @@ const legacyRoom: RoomType = {
   isPvp: false,
 };
 
-const room = initializeFablePveRoom(legacyRoom, startedAtMs);
-fableFightRoomsCache.set(room.id, room);
+const timeline: string[] = [];
+const directMessages: string[] = [];
+const publishedMessages: string[] = [];
+const ws = {
+  data: { heroId: "player" },
+  subscribe: (topic: string) => timeline.push(`subscribe:${topic}`),
+  unsubscribe: (topic: string) => timeline.push(`unsubscribe:${topic}`),
+  send: (message: string) => {
+    directMessages.push(message);
+    timeline.push(`send:${JSON.parse(message).type}`);
+  },
+} as unknown as Bun.ServerWebSocket<{ heroId?: string }>;
+const server = {
+  publish: (_topic: string, message: string) => {
+    publishedMessages.push(message);
+    timeline.push(`publish:${JSON.parse(message).type}`);
+    return 1;
+  },
+} as unknown as Bun.Server;
+
+const room = activateFablePveRoom(server, ws, legacyRoom, startedAtMs);
 
 const cachedRoom = fableFightRoomsCache.get(room.id);
 assert.ok(cachedRoom);
@@ -77,6 +101,23 @@ assert.equal(
 );
 assert.equal(cachedRoom.rounds[0].exchanges[1].deadlines.attackAtMs, null);
 assert.equal(fightRoomsCache.has(room.id), false);
+assert.deepEqual(timeline, [
+  `subscribe:${room.id}`,
+  "send:personal_room_update",
+  "publish:exchangeStarted",
+]);
+assert.equal(JSON.parse(directMessages[0]).data.id, room.id);
+assert.equal(JSON.parse(publishedMessages[0]).attackerId, "player");
+assert.deepEqual(inspectFablePveCoordinator(room.id), {
+  running: true,
+  attackDeadlines: 1,
+  transitions: 0,
+  defenseDeadlines: 0,
+});
+assert.deepEqual(userRoomsCache.get("player"), {
+  id: room.id,
+  isPvp: false,
+});
 assert.equal(legacyRoom.rounds.length, 0);
 assert.equal("stamina" in legacyRoom.players[0], false);
 
@@ -92,6 +133,8 @@ console.log({
     deadlines: exchange.deadlines,
   })),
   legacyCacheContainsRoom: fightRoomsCache.has(room.id),
+  activationTimeline: timeline,
 });
 
-fableFightRoomsCache.delete(room.id);
+deleteFablePveRoom(room.id);
+userRoomsCache.delete("player");

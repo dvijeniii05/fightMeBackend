@@ -1,8 +1,9 @@
 import { selectHero } from "../../drizzle/queries/hero";
 import { selectFightRoom } from "../../drizzle/queries/fightRoom";
+import { activateFablePveRoom } from "../../helpers/activateFablePveRoom";
 import { calculateStatsHelper } from "../../helpers/calculateStatsHelper";
 import type { RoomType } from "../../types/roomType";
-import { fightRoomsCache, userRoomsCache } from "../socketCache";
+import { fightRoomsCache } from "../socketCache";
 import { topic } from "../socketTopics";
 
 export const createBotRoomRoute = async (
@@ -94,22 +95,8 @@ export const createBotRoomRoute = async (
       };
 
       console.log("NEW_ROOM", room);
-
-      fightRoomsCache.set(parsedMessage.roomId, room);
-      userRoomsCache.set(parsedMessage.heroId, {
-        id: parsedMessage.roomId,
-        isPvp: false,
-      });
-
-      ws.subscribe(parsedMessage.roomId);
-      console.log("FIGHT_ROOMS", fightRoomsCache);
-
-      ws.send(
-        JSON.stringify({
-          type: "personal_room_update",
-          data: room,
-        }),
-      );
+      const fableRoom = activateFablePveRoom(server, ws, room);
+      console.log("FABLE_FIGHT_ROOM", fableRoom.id);
 
       const roomsArray = Array.from(fightRoomsCache.values());
 

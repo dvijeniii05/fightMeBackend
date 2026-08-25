@@ -11,6 +11,7 @@ import type {
   FableCommitStrikeMessage,
   FableExchangeStartedMessage,
   FableIncomingStrikeMessage,
+  FableStrikeCommittedMessage,
   FableStrikeCommitRejectedMessage,
   FightDirection,
   SkillId,
@@ -130,6 +131,17 @@ export const commitStrikeRoute = (
     exchange.deadlines.blockAtMs,
     handleFableExchangeResolved,
   );
+
+  const accepted: FableStrikeCommittedMessage = {
+    type: "strikeCommitted",
+    roomId: room.id,
+    roundNumber: round.roundNumber,
+    exchangeIndex: exchange.exchangeIndex,
+    skillId: skill.id,
+    direction: exchange.strike.direction,
+    stamina: attacker.stamina,
+  };
+  ws.send(JSON.stringify(accepted));
 
   const exchangeStarted: FableExchangeStartedMessage = {
     type: "exchangeStarted",

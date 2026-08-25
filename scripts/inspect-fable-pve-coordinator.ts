@@ -193,7 +193,10 @@ assert.equal(
 assert.equal(firstRound.activeExchangeIndex, 1);
 assert.equal(firstRound.exchanges[1].strike?.skillId, "basic");
 assert.equal(multipleRounds.room.players[1].stamina, 100);
-assert.equal(multipleRounds.playerMessages.length, 1);
+assert.deepEqual(
+  multipleRounds.playerMessages.map(message => JSON.parse(message).type),
+  ["strikeCommitted", "incomingStrike"],
+);
 
 const firstBotDirection = firstRound.exchanges[1].strike
   ?.direction as FightDirection;

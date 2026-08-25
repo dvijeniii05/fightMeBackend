@@ -121,13 +121,21 @@ assert.deepEqual(JSON.parse(valid.defenderMessages[0]), {
   exchangeIndex: 0,
   direction: "up",
 });
-assert.equal(valid.attackerMessages.length, 0);
+assert.deepEqual(JSON.parse(valid.attackerMessages[0]), {
+  type: "strikeCommitted",
+  roomId: baseCommit.roomId,
+  roundNumber: 1,
+  exchangeIndex: 0,
+  skillId: "precise",
+  direction: "up",
+  stamina: 70,
+});
 
 const committedSnapshot = JSON.stringify(valid.room);
 commitStrikeRoute(valid.server, valid.attackerSocket, baseCommit);
 assert.equal(JSON.stringify(valid.room), committedSnapshot);
-assert.equal(valid.attackerMessages.length, 1);
-assert.equal(JSON.parse(valid.attackerMessages[0]).reason, "duplicate_commit");
+assert.equal(valid.attackerMessages.length, 2);
+assert.equal(JSON.parse(valid.attackerMessages[1]).reason, "duplicate_commit");
 assert.equal(valid.publishedMessages.length, 1);
 assert.equal(valid.defenderMessages.length, 1);
 
