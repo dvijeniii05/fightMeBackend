@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
-import { ATTACK_PICK_DEADLINE_MS } from "../constants/combatTiming";
+import {
+  ATTACK_PICK_DEADLINE_MS,
+  PARRY_BUFF_MULT,
+} from "../constants/combatTiming";
 import {
   advanceFablePveRoom,
   deleteFablePveRoom,
@@ -209,6 +212,9 @@ commitDefenseRoute(multipleRounds.server, multipleRounds.playerSocket, {
   blockOffsetMs: 150,
 });
 assert.equal(firstRound.exchanges[1].state, "resolved");
+assert.deepEqual(multipleRounds.room.players[0].nextStrikeBuff, {
+  damageMult: PARRY_BUFF_MULT,
+});
 assert.equal(
   await advanceFablePveRoom(
     multipleRounds.server,
@@ -221,6 +227,9 @@ assert.equal(
 assert.equal(multipleRounds.room.currentRound, 2);
 assert.equal(multipleRounds.room.players[0].stamina, 70);
 assert.equal(multipleRounds.room.players[1].stamina, 100);
+assert.deepEqual(multipleRounds.room.players[0].nextStrikeBuff, {
+  damageMult: PARRY_BUFF_MULT,
+});
 assert.equal(
   multipleRounds.publishedMessages.filter(
     message => JSON.parse(message).type === "roundResolved",
@@ -228,14 +237,26 @@ assert.equal(
   1,
 );
 
-commitStrikeRoute(multipleRounds.server, multipleRounds.playerSocket, {
-  roomId: multipleRounds.room.id,
-  roundNumber: 2,
-  exchangeIndex: 0,
-  heroId: "player",
-  skillId: "basic",
-  direction: "right",
+const randomBeforeBuffedStrike = Math.random;
+Math.random = sequenceRandom(0.5, 0, 0);
+try {
+  commitStrikeRoute(multipleRounds.server, multipleRounds.playerSocket, {
+    roomId: multipleRounds.room.id,
+    roundNumber: 2,
+    exchangeIndex: 0,
+    heroId: "player",
+    skillId: "basic",
+    direction: "right",
+  });
+} finally {
+  Math.random = randomBeforeBuffedStrike;
+}
+const buffedStrike = multipleRounds.room.rounds[1].exchanges[0];
+assert.deepEqual(buffedStrike.strike?.damageBuff, {
+  damageMult: PARRY_BUFF_MULT,
 });
+assert.equal(buffedStrike.resolution?.damage, 13);
+assert.equal(multipleRounds.room.players[0].nextStrikeBuff, undefined);
 assert.equal(
   await advanceFablePveRoom(
     multipleRounds.server,
@@ -266,6 +287,25 @@ assert.equal(
   true,
 );
 assert.equal(multipleRounds.room.currentRound, 3);
+assert.equal(multipleRounds.room.players[0].stamina, 70);
+assert.equal(multipleRounds.room.players[1].stamina, 100);
+const randomBeforeUnbuffedStrike = Math.random;
+Math.random = sequenceRandom(0.5, 0, 0);
+try {
+  commitStrikeRoute(multipleRounds.server, multipleRounds.playerSocket, {
+    roomId: multipleRounds.room.id,
+    roundNumber: 3,
+    exchangeIndex: 0,
+    heroId: "player",
+    skillId: "basic",
+    direction: "down",
+  });
+} finally {
+  Math.random = randomBeforeUnbuffedStrike;
+}
+const unbuffedStrike = multipleRounds.room.rounds[2].exchanges[0];
+assert.equal(unbuffedStrike.strike?.damageBuff, null);
+assert.equal(unbuffedStrike.resolution?.damage, 10);
 assert.equal(multipleRounds.room.players[0].stamina, 70);
 assert.equal(multipleRounds.room.players[1].stamina, 100);
 deleteHarness(multipleRounds.room.id);
@@ -476,6 +516,7 @@ console.log({
   },
   completedRounds: 2,
   staminaAfterTwoRounds: { player: 70, bot: 100 },
+  parryBuffDamage: { buffed: 13, nextStrike: 10 },
   attackTimeout: {
     skillId: forfeitedExchange.resolution?.skillId,
     attackZone: forfeitedExchange.resolution?.attackZone,

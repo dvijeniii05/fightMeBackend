@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { PARRY_BUFF_MULT } from "../constants/combatTiming";
 import { initializeFablePveRoom } from "../helpers/initializeFablePveRoom";
 import {
   clearFableDefenseDeadline,
@@ -131,6 +132,11 @@ const tierCases: Array<{
 for (const tierCase of tierCases) {
   const roomId = `defense-tier-${tierCase.offset}-${tierCase.direction ?? "up"}`;
   const harness = createHarness(roomId);
+  if (tierCase.offset === 0 && tierCase.direction === undefined) {
+    harness.room.players[1].nextStrikeBuff = {
+      damageMult: PARRY_BUFF_MULT,
+    };
+  }
   commitDefenseRoute(harness.server, harness.defenderSocket, {
     roomId,
     roundNumber: 1,
@@ -164,7 +170,7 @@ for (const tierCase of tierCases) {
 
   if (tierCase.expectedTier === "perfect") {
     assert.deepEqual(harness.room.players[1].nextStrikeBuff, {
-      damageMult: 1.25,
+      damageMult: PARRY_BUFF_MULT,
     });
     assert.deepEqual(resolvedMessage.parryBuff, { playerId: "bot" });
   } else {
