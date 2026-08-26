@@ -78,6 +78,7 @@ const createHarness = (roomId: string, commitStrike = true) => {
   } as unknown as Bun.Server;
 
   fableFightRoomsCache.set(room.id, room);
+  userSockets.set("player", attackerSocket);
   userSockets.set("bot", defenderSocket);
 
   if (commitStrike) {
@@ -280,6 +281,9 @@ for (const rejectionCase of rejectionCases) {
   rejectionCase.prepare?.(harness);
   harness.defenderSocket.data.heroId = rejectionCase.socketHeroId ?? "bot";
   const payload = { ...baseDefense(roomId), ...rejectionCase.payload };
+  if (rejectionCase.expectedReason !== "identity_mismatch") {
+    userSockets.set(payload.heroId, harness.defenderSocket);
+  }
   const before = JSON.stringify(harness.room);
 
   commitDefenseRoute(harness.server, harness.defenderSocket, payload);
@@ -297,6 +301,25 @@ for (const rejectionCase of rejectionCases) {
   );
   cleanupHarness(roomId);
 }
+
+const supersededRoomId = "defense-reject-superseded-socket";
+const supersededHarness = createHarness(supersededRoomId);
+const replacementDefenderSocket = {
+  data: { heroId: "bot" },
+} as unknown as Bun.ServerWebSocket<{ heroId?: string }>;
+userSockets.set("bot", replacementDefenderSocket);
+const supersededBefore = JSON.stringify(supersededHarness.room);
+commitDefenseRoute(
+  supersededHarness.server,
+  supersededHarness.defenderSocket,
+  baseDefense(supersededRoomId),
+);
+assert.equal(JSON.stringify(supersededHarness.room), supersededBefore);
+assert.equal(
+  JSON.parse(supersededHarness.defenderMessages.at(-1)!).reason,
+  "identity_mismatch",
+);
+cleanupHarness(supersededRoomId);
 
 const invalidRoomMessages: string[] = [];
 commitDefenseRoute(
@@ -329,6 +352,7 @@ assert.equal(timeoutExchange.resolution?.damage, 100);
 assert.equal(timeoutHarness.room.players[1].hp, 900);
 assert.equal(timeoutHarness.publishedMessages.length, 2);
 cleanupHarness(timeoutRoomId);
+userSockets.delete("player");
 userSockets.delete("bot");
 
 console.log({
@@ -337,7 +361,10 @@ console.log({
     direction: item.direction ?? "up",
     tier: item.expectedTier,
   })),
-  rejectedWithoutMutation: rejectionCases.map(item => item.name),
+  rejectedWithoutMutation: [
+    ...rejectionCases.map(item => item.name),
+    "superseded socket",
+  ],
   noDefenseFallback: {
     tier: timeoutExchange.blockTier,
     damage: timeoutExchange.resolution?.damage,

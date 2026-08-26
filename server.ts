@@ -7,6 +7,7 @@ import {
   userRoomsCache,
   userSockets,
 } from "./socket_helpers/socketCache";
+import { sendFableReconnectSnapshot } from "./helpers/sendFableReconnectSnapshot";
 import { topic } from "./socket_helpers/socketTopics";
 import { messageRouter } from "./socket_helpers/socketRouter";
 import { getHero } from "./rest_routes/getHero";
@@ -174,8 +175,13 @@ const newServer = Bun.serve({
       if (!heroId) {
         ws.close(401, "Unauthorised Access");
       } else {
+        const previousSocket = userSockets.get(heroId);
         userSockets.set(heroId, ws);
+        if (previousSocket && previousSocket !== ws) {
+          previousSocket.close(4001, "Connection replaced");
+        }
         console.log(`Hero with ${heroId} is connected`);
+        sendFableReconnectSnapshot(ws, heroId);
         // MOVE THIS back to its own route and rework it!!!
         //Adding hero to an activeHeroes pull in socket cache
       }
@@ -220,6 +226,8 @@ const newServer = Bun.serve({
       console.log(`Player ${ws.data.heroId} disconnected`);
       // Clean up disconnected players from rooms
       if (ws.data.heroId) {
+        if (userSockets.get(ws.data.heroId) !== ws) return;
+        userSockets.delete(ws.data.heroId);
         //‼️ Add logic to handle user disconnection & reconneciton to still have a rest penalty if not reconnected in time.
         await updateHeroCurrHp({
           heroId: ws.data.heroId,

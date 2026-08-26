@@ -62,6 +62,28 @@ export type FableStrikeCommittedMessage = FableExchangeMessageBase & {
   stamina: number;
 };
 
+export type FableExchangeSnapshotMessage = FableExchangeMessageBase & {
+  type: "exchangeSnapshot";
+  serverNowMs: number;
+  state: ExchangeState;
+  attackerId: string;
+  defenderId: string;
+  strike: {
+    skillId: SkillId | null;
+    direction: FightDirection;
+  } | null;
+  defense: {
+    direction: FightDirection;
+    blockOffsetMs: number;
+  } | null;
+  hp: Record<string, number>;
+  stamina: Record<string, number>;
+  parryBuffActive: boolean;
+  attackDeadlineAtMs: number | null;
+  impactAtMs: number | null;
+  defenseDeadlineAtMs: number | null;
+};
+
 export type FableStrikeCommitRejectedMessage = FableExchangeMessageBase & {
   type: "strikeCommitRejected";
   reason: StrikeCommitRejectionReason;
@@ -108,6 +130,7 @@ export type FableServerMessage =
   | FableExchangeStartedMessage
   | FableIncomingStrikeMessage
   | FableStrikeCommittedMessage
+  | FableExchangeSnapshotMessage
   | FableStrikeCommitRejectedMessage
   | FableDefenseCommitRejectedMessage
   | FableExchangeResolvedMessage
@@ -156,6 +179,24 @@ export type FableProtocolExamples = [
     skillId: "precise";
     direction: "up";
     stamina: 70;
+  }>,
+  ProtocolExample<{
+    type: "exchangeSnapshot";
+    roomId: "room-1";
+    roundNumber: 1;
+    exchangeIndex: 0;
+    serverNowMs: 1000;
+    state: "awaiting_block";
+    attackerId: "hero-1";
+    defenderId: "hero-2";
+    strike: { skillId: null; direction: "up" };
+    defense: null;
+    hp: { "hero-1": 1000; "hero-2": 1000 };
+    stamina: { "hero-1": 70; "hero-2": 100 };
+    parryBuffActive: false;
+    attackDeadlineAtMs: null;
+    impactAtMs: 1900;
+    defenseDeadlineAtMs: 3300;
   }>,
   ProtocolExample<{
     type: "strikeCommitRejected";

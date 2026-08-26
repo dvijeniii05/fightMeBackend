@@ -6,7 +6,7 @@ import type {
 } from "../../types/fableProtocol";
 import { handleFableExchangeResolved } from "../../helpers/fablePveCoordinator";
 import { resolveFableExchange } from "../../helpers/resolveFableExchange";
-import { fableFightRoomsCache } from "../socketCache";
+import { fableFightRoomsCache, userSockets } from "../socketCache";
 
 type CommitDefensePayload = Omit<FableCommitDefenseMessage, "type">;
 type FightSocket = Bun.ServerWebSocket<{ heroId?: string }>;
@@ -41,7 +41,10 @@ export const commitDefenseRoute = (
     return;
   }
 
-  if (ws.data.heroId !== parsedMessage.heroId) {
+  if (
+    ws.data.heroId !== parsedMessage.heroId ||
+    userSockets.get(parsedMessage.heroId) !== ws
+  ) {
     rejectCommit(ws, parsedMessage, "identity_mismatch");
     return;
   }

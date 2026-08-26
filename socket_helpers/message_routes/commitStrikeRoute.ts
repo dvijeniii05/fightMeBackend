@@ -63,7 +63,10 @@ export const commitStrikeRoute = (
     player => player.id === parsedMessage.heroId,
   );
 
-  if (ws.data.heroId !== parsedMessage.heroId) {
+  if (
+    ws.data.heroId !== parsedMessage.heroId ||
+    userSockets.get(parsedMessage.heroId) !== ws
+  ) {
     rejectCommit(ws, parsedMessage, "identity_mismatch");
     return;
   }

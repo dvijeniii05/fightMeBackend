@@ -78,6 +78,7 @@ const createHarness = (roomId = baseCommit.roomId) => {
   } as unknown as Bun.Server;
 
   fableFightRoomsCache.set(room.id, room);
+  userSockets.set("player", attackerSocket);
   userSockets.set("bot", defenderSocket);
 
   return {
@@ -199,6 +200,9 @@ for (const rejectionCase of rejectionCases) {
   const harness = createHarness();
   rejectionCase.prepare?.(harness.room);
   harness.attackerSocket.data.heroId = rejectionCase.socketHeroId ?? "player";
+  if (rejectionCase.expectedReason !== "identity_mismatch") {
+    userSockets.set(rejectionCase.payload.heroId, harness.attackerSocket);
+  }
   const before = JSON.stringify(harness.room);
 
   commitStrikeRoute(
@@ -218,7 +222,24 @@ for (const rejectionCase of rejectionCases) {
   assert.equal(harness.defenderMessages.length, 0, rejectionCase.name);
 }
 
+const superseded = createHarness("commit-strike-superseded");
+const replacementSocket = {
+  data: { heroId: "player" },
+} as unknown as Bun.ServerWebSocket<{ heroId?: string }>;
+userSockets.set("player", replacementSocket);
+const supersededBefore = JSON.stringify(superseded.room);
+commitStrikeRoute(superseded.server, superseded.attackerSocket, {
+  ...baseCommit,
+  roomId: superseded.room.id,
+});
+assert.equal(JSON.stringify(superseded.room), supersededBefore);
+assert.equal(
+  JSON.parse(superseded.attackerMessages[0]).reason,
+  "identity_mismatch",
+);
+
 fableFightRoomsCache.clear();
+userSockets.delete("player");
 userSockets.delete("bot");
 clearFableDefenseDeadline(baseCommit.roomId, 1, 0);
 
@@ -231,6 +252,7 @@ console.log({
   },
   rejectedWithoutMutation: [
     "duplicate",
+    "superseded socket",
     ...rejectionCases.map(rejectionCase => rejectionCase.name),
   ],
 });
