@@ -8,9 +8,11 @@ import {
   uniqueIndex,
   varchar,
   boolean,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { fightRoomSxma } from "./fightRoom";
 import { itemInstanceSxma } from "./item";
+import type { SkillId } from "../../types/fableProtocol";
 
 export const heroSxma = pgTable(
   "hero",
@@ -32,6 +34,11 @@ export const heroSxma = pgTable(
     shardsA: integer("shards_a").default(0).notNull(),
     shardsB: integer("shards_b").default(0).notNull(),
     shardsC: integer("shards_c").default(0).notNull(),
+    skillLoadout: jsonb("skill_loadout")
+      .$type<SkillId[]>()
+      .default(["precise"])
+      .notNull(),
+    criticalStrikes: integer("critical_strikes").default(0).notNull(),
   },
   table => [
     uniqueIndex("nickname_unique_idx")

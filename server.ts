@@ -25,6 +25,7 @@ import { forgeItem } from "./rest_routes/forgeItem";
 import { deleteHero } from "./rest_routes/deleteHero";
 import { staleRoomDaemon } from "./daemons/staleRoomDaemon";
 import { deleteFightRoom } from "./drizzle/queries/fightRoom";
+import { updateSkillLoadoutRoute } from "./rest_routes/updateSkillLoadoutRoute";
 
 // --- Dashboard ---
 const dashboardHtml = await Bun.file("./dashboard/dashboard.html").text();
@@ -140,6 +141,8 @@ const newServer = Bun.serve({
     "/user/registerHero/:heroName": async req => await createHero({ req }),
     "/user/getHero/:heroId": async req => await getHero(req),
     "/user/updateHeroStats": async req => await updateHeroStatsRoute(req),
+    "/user/updateSkillLoadout/:heroId": async req =>
+      await updateSkillLoadoutRoute(req),
     "/user/deleteHero/:heroId": async req => await deleteHero(req),
     "/fight/createRoom/:heroId": async req => await createRoom(req),
     "/fight/createBotRoom/:heroId/:botId": async req =>

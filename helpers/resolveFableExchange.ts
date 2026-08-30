@@ -3,6 +3,7 @@ import {
   PARRY_BUFF_MULT,
   PERFECT_BLOCK_MS,
 } from "../constants/combatTiming";
+import { COMBAT_SKILLS } from "../constants/skills";
 import { fableFightRoomsCache } from "../socket_helpers/socketCache";
 import type {
   BlockTier,
@@ -100,13 +101,21 @@ export const resolveFableExchange = ({
   );
   if (!attacker || !defender) return null;
 
-  const blockTier = defense
+  const skill = COMBAT_SKILLS[exchange.strike.skillId];
+  const attemptedBlockTier = defense
     ? classifyBlockTier(
         exchange.strike.direction,
         defense.direction,
         defense.blockOffsetMs,
       )
     : "none";
+  const blockTier =
+    defender.blockDisabled || !skill.blockable
+      ? "none"
+      : attemptedBlockTier === "perfect" && !skill.parryable
+        ? "basic"
+        : attemptedBlockTier;
+  delete defender.blockDisabled;
   const strikeResult = resolveStrike({
     attacker: {
       stats: attacker.stats,
@@ -121,6 +130,14 @@ export const resolveFableExchange = ({
   });
 
   defender.hp = strikeResult.resultingHp;
+  if (skill.lifeStealPercent > 0 && strikeResult.damage > 0) {
+    attacker.hp = Math.min(
+      attacker.maxHp,
+      attacker.hp +
+        Math.round((strikeResult.damage * skill.lifeStealPercent) / 100),
+    );
+  }
+  if (skill.deniesOpponentBlock) defender.blockDisabled = true;
   if (blockTier === "perfect") {
     defender.nextStrikeBuff = { damageMult: PARRY_BUFF_MULT };
   }

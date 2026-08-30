@@ -1,6 +1,7 @@
 import { expMap } from "../constants/expMap";
 import {
   deleteCopiedBot,
+  incrementHeroCriticalStrikes,
   updateHeroAfterFight,
   updateHeroCurrHp,
 } from "../drizzle/queries/hero";
@@ -14,7 +15,14 @@ import { calculateSouls } from "./calculateSoulsHelper";
 type MatchResultRoom = Pick<
   RoomType,
   "isDungeon" | "matchResult" | "players" | "shardsType"
->;
+> & {
+  rounds: Array<{
+    exchanges?: Array<{
+      attackerId: string;
+      resolution: { isCrit: boolean; damage: number } | null;
+    }>;
+  }>;
+};
 
 export const getMatchResults = async ({
   room,
@@ -34,6 +42,19 @@ export const getMatchResults = async ({
     heroId: player.id,
     currHp: player.hp,
   });
+
+  const landedCriticalStrikes = room.rounds.reduce(
+    (total, round) =>
+      total +
+      (round.exchanges?.filter(
+        exchange =>
+          exchange.attackerId === player.id &&
+          exchange.resolution?.isCrit &&
+          exchange.resolution.damage > 0,
+      ).length ?? 0),
+    0,
+  );
+  await incrementHeroCriticalStrikes(player.id, landedCriticalStrikes);
 
   await deleteCopiedBot(bot.id);
 

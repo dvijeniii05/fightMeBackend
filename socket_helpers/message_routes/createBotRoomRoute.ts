@@ -5,6 +5,7 @@ import { calculateStatsHelper } from "../../helpers/calculateStatsHelper";
 import type { RoomType } from "../../types/roomType";
 import { fightRoomsCache } from "../socketCache";
 import { topic } from "../socketTopics";
+import { isValidSkillLoadout } from "../../constants/skills";
 
 export const createBotRoomRoute = async (
   server: Bun.Server,
@@ -30,6 +31,12 @@ export const createBotRoomRoute = async (
     const fightRoom = await selectFightRoom(parsedMessage.roomId);
     console.log("Hero AND Bot", hero, bot);
     if (hero && bot && fightRoom) {
+      if (
+        !isValidSkillLoadout(hero.skillLoadout, hero.lvl, hero.criticalStrikes)
+      ) {
+        throw new Error("Hero has an invalid skill loadout");
+      }
+
       const { hp: calcHp, ...calcStats } = calculateStatsHelper(hero);
       const { hp: calcBotHp, ...calcBotStats } = calculateStatsHelper(bot);
       console.log("CALC_STATS", calcStats);
@@ -66,6 +73,8 @@ export const createBotRoomRoute = async (
             shardsB: hero.shardsB ?? 0,
             shardsC: hero.shardsC ?? 0,
             items: hero.items.filter(item => item.equipped) ?? [],
+            skillLoadout: hero.skillLoadout,
+            criticalStrikes: hero.criticalStrikes,
           },
           {
             id: bot.id,
@@ -86,6 +95,8 @@ export const createBotRoomRoute = async (
             shardsB: 0,
             shardsC: 0,
             items: bot.items ?? [],
+            skillLoadout: bot.skillLoadout,
+            criticalStrikes: bot.criticalStrikes,
           },
         ],
         isPvp: false,

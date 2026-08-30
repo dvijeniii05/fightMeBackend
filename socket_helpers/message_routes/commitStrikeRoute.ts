@@ -1,5 +1,5 @@
 import { DEFENSE_COMMIT_DEADLINE_MS } from "../../constants/combatTiming";
-import { COMBAT_SKILLS } from "../../constants/skills";
+import { COMBAT_SKILLS, isSkillId } from "../../constants/skills";
 import {
   clearFableAttackDeadline,
   handleFableExchangeResolved,
@@ -14,7 +14,6 @@ import type {
   FableStrikeCommittedMessage,
   FableStrikeCommitRejectedMessage,
   FightDirection,
-  SkillId,
   StrikeCommitRejectionReason,
 } from "../../types/fableProtocol";
 import { fableFightRoomsCache, userSockets } from "../socketCache";
@@ -23,10 +22,6 @@ type CommitStrikePayload = Omit<FableCommitStrikeMessage, "type">;
 type FightSocket = Bun.ServerWebSocket<{ heroId?: string }>;
 
 const DIRECTIONS: readonly FightDirection[] = ["up", "right", "down", "left"];
-const SKILL_IDS: readonly SkillId[] = ["basic", "precise", "heavy"];
-
-const isSkillId = (value: unknown): value is SkillId =>
-  typeof value === "string" && SKILL_IDS.includes(value as SkillId);
 
 const rejectCommit = (
   ws: FightSocket,
@@ -104,6 +99,19 @@ export const commitStrikeRoute = (
   }
 
   const skill = COMBAT_SKILLS[parsedMessage.skillId];
+  if (
+    skill.id !== "basic" &&
+    !attacker.skillLoadout.includes(parsedMessage.skillId)
+  ) {
+    rejectCommit(ws, parsedMessage, "skill_not_equipped");
+    return;
+  }
+
+  if (skill.requiresParryBuff && !attacker.nextStrikeBuff) {
+    rejectCommit(ws, parsedMessage, "skill_unavailable");
+    return;
+  }
+
   if (attacker.stamina < skill.cost) {
     rejectCommit(ws, parsedMessage, "insufficient_stamina");
     return;
@@ -111,7 +119,10 @@ export const commitStrikeRoute = (
 
   const committedAtMs = Date.now();
   const damageBuff = attacker.nextStrikeBuff
-    ? { ...attacker.nextStrikeBuff }
+    ? {
+        damageMult:
+          attacker.nextStrikeBuff.damageMult + skill.parryBuffBonusMultiplier,
+      }
     : null;
 
   clearFableAttackDeadline(room.id, round.roundNumber, exchange.exchangeIndex);

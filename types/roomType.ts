@@ -33,6 +33,8 @@ export type Player = {
   shardsB: number;
   shardsC: number;
   items: InventoryItemType[];
+  skillLoadout?: SkillId[];
+  criticalStrikes?: number;
 };
 
 export type Round = {
@@ -96,12 +98,14 @@ export type RoomType = {
   shardsType?: string; //  a = greenForge, b = blueForge, c = purpleForge
 };
 
-export type FablePlayer = Player & {
+export type FablePlayer = Omit<Player, "skillLoadout"> & {
+  skillLoadout: SkillId[];
   stamina: number;
   maxStamina: number;
   nextStrikeBuff?: {
     damageMult: number;
   };
+  blockDisabled?: boolean;
 };
 
 export type FableExchange = {

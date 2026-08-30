@@ -28,7 +28,7 @@ export const activateFablePveRoom = (
   ws.send(
     JSON.stringify({
       type: "personal_room_update",
-      data: legacyRoom,
+      data: room,
     }),
   );
 

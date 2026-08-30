@@ -2,6 +2,7 @@ import { randomUUIDv7, type BunRequest, type ServerWebSocket } from "bun";
 import { insertFightRoom } from "../drizzle/queries/fightRoom";
 import { selectHero } from "../drizzle/queries/hero";
 import { calculateStatsHelper } from "../helpers/calculateStatsHelper";
+import { isValidSkillLoadout } from "../constants/skills";
 
 export const createRoom = async (
   req: BunRequest<"/fight/createRoom/:heroId">,
@@ -15,6 +16,15 @@ export const createRoom = async (
   try {
     const hero = await selectHero(heroId);
     if (hero) {
+      if (
+        !isValidSkillLoadout(hero.skillLoadout, hero.lvl, hero.criticalStrikes)
+      ) {
+        return Response.json(
+          { message: "Invalid or locked skill loadout" },
+          { status: 400 },
+        );
+      }
+
       const caclStats = calculateStatsHelper(hero);
 
       await insertFightRoom({

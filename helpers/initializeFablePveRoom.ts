@@ -1,7 +1,5 @@
-import {
-  ATTACK_PICK_DEADLINE_MS,
-  FIGHT_STAMINA,
-} from "../constants/combatTiming";
+import { ATTACK_PICK_DEADLINE_MS } from "../constants/combatTiming";
+import { DEFAULT_SKILL_LOADOUT, getMaxStamina } from "../constants/skills";
 import type {
   FableExchange,
   FablePlayer,
@@ -11,11 +9,15 @@ import type {
   RoomType,
 } from "../types/roomType";
 
-const initializeFablePlayer = (player: Player): FablePlayer => ({
-  ...player,
-  stamina: FIGHT_STAMINA,
-  maxStamina: FIGHT_STAMINA,
-});
+const initializeFablePlayer = (player: Player): FablePlayer => {
+  const maxStamina = getMaxStamina(player.lvl);
+  return {
+    ...player,
+    skillLoadout: player.skillLoadout ?? [...DEFAULT_SKILL_LOADOUT],
+    stamina: maxStamina,
+    maxStamina,
+  };
+};
 
 export const initializeFablePveRound = (
   playerId: string,

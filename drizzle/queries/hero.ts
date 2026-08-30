@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "../db";
 import { heroSxma, statsSxma, type InsertHero } from "../schema/hero";
 import type { StatsProps } from "../../helpers/calculateStatsHelper";
@@ -100,6 +100,8 @@ export const copyBotForFight = async (botId: string, roomId: string) => {
       exp: botTemplate.exp,
       statsPoints: botTemplate.statsPoints,
       isDupe: true,
+      skillLoadout: botTemplate.skillLoadout,
+      criticalStrikes: botTemplate.criticalStrikes,
     });
 
     // Insert new stats with copied data
@@ -210,4 +212,26 @@ export const updateHeroStats = async (data: {
     .where(eq(statsSxma.ownerId, data.ownerId));
 
   return Promise.resolve(true);
+};
+
+export const updateHeroSkillLoadout = async (
+  heroId: string,
+  skillLoadout: InsertHero["skillLoadout"],
+) => {
+  await db
+    .update(heroSxma)
+    .set({ skillLoadout })
+    .where(eq(heroSxma.id, heroId));
+};
+
+export const incrementHeroCriticalStrikes = async (
+  heroId: string,
+  amount: number,
+) => {
+  if (amount <= 0) return;
+
+  await db
+    .update(heroSxma)
+    .set({ criticalStrikes: sql`${heroSxma.criticalStrikes} + ${amount}` })
+    .where(eq(heroSxma.id, heroId));
 };

@@ -1,7 +1,14 @@
 export type CombatVersion = "legacy" | "fable_v2";
 
 export type FightDirection = "up" | "right" | "down" | "left";
-export type SkillId = "basic" | "precise" | "heavy";
+export type SkillId =
+  | "basic"
+  | "precise"
+  | "heavy"
+  | "sunder"
+  | "leech"
+  | "hidden"
+  | "perfect";
 export type BlockTier = "perfect" | "basic" | "none";
 export type FableForfeitReason = "attack_timeout";
 export type ExchangeState = "awaiting_attack" | "awaiting_block" | "resolved";
@@ -14,6 +21,8 @@ export type StrikeCommitRejectionReason =
   | "duplicate_commit"
   | "invalid_direction"
   | "unknown_skill"
+  | "skill_not_equipped"
+  | "skill_unavailable"
   | "insufficient_stamina";
 export type DefenseCommitRejectionReason =
   | "invalid_room"

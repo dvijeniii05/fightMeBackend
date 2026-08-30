@@ -58,16 +58,23 @@ export const resolveStrike = ({
   outcomes,
 }: ResolveStrikeProps): ResolveStrikeResult => {
   const skill = COMBAT_SKILLS[skillId];
+  const skillCritChance =
+    skill.id === "basic" ? 0 : attacker.stats.skillCritChance;
   const isCrit = skill.guaranteedCrit
     ? true
-    : (outcomes?.isCrit ?? isItCritHelper(attacker.stats.critChance));
+    : (outcomes?.isCrit ??
+      isItCritHelper(attacker.stats.critChance + skillCritChance));
   const isEvade =
     outcomes?.isEvade ?? isItEvadedHelper(defender.stats.evadeChance);
-  const isFast = outcomes?.isFast ?? isItFastHelper(attacker.stats.fastChance);
+  const isFast = skill.guaranteedFast
+    ? true
+    : (outcomes?.isFast ?? isItFastHelper(attacker.stats.fastChance));
+  const critMultiplier =
+    attacker.stats.critMultiplier + skill.bonusCritMultiplier;
 
   const potentialDamage = Math.round(
     attacker.stats.baseDamageBoost *
-      (isCrit ? attacker.stats.critMultiplier : 1) *
+      (isCrit ? critMultiplier : 1) *
       (isFast ? 2.5 : 1),
   );
 
