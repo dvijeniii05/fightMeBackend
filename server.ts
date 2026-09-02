@@ -26,6 +26,7 @@ import { deleteHero } from "./rest_routes/deleteHero";
 import { staleRoomDaemon } from "./daemons/staleRoomDaemon";
 import { deleteFightRoom } from "./drizzle/queries/fightRoom";
 import { updateSkillLoadoutRoute } from "./rest_routes/updateSkillLoadoutRoute";
+import { updateHeroSpriteRoute } from "./rest_routes/updateHeroSpriteRoute";
 
 // --- Dashboard ---
 const dashboardHtml = await Bun.file("./dashboard/dashboard.html").text();
@@ -143,6 +144,7 @@ const newServer = Bun.serve({
     "/user/updateHeroStats": async req => await updateHeroStatsRoute(req),
     "/user/updateSkillLoadout/:heroId": async req =>
       await updateSkillLoadoutRoute(req),
+    "/user/updateSprite/:heroId": async req => await updateHeroSpriteRoute(req),
     "/user/deleteHero/:heroId": async req => await deleteHero(req),
     "/fight/createRoom/:heroId": async req => await createRoom(req),
     "/fight/createBotRoom/:heroId/:botId": async req =>
@@ -241,7 +243,7 @@ const newServer = Bun.serve({
           topic.activeHeroes,
           JSON.stringify({
             type: "all_active_heroes",
-            activeUser: Array.from(activeHeroesCache.entries()),
+            heroes: Array.from(activeHeroesCache.entries()),
           }),
         );
       }

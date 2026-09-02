@@ -1,4 +1,4 @@
-import { selectHero } from "../../drizzle/queries/hero";
+import { selectHero, updateHeroLocation } from "../../drizzle/queries/hero";
 import { calculateStatsHelper } from "../../helpers/calculateStatsHelper";
 import { activeHeroesCache } from "../socketCache";
 import { topic } from "../socketTopics";
@@ -9,29 +9,48 @@ export const activeHeroesRoute = async (
     heroId?: string;
   }>,
   parsedMessage: {
-    heroId: string;
+    location?: unknown;
   },
 ) => {
   try {
-    if (!activeHeroesCache.has(parsedMessage.heroId)) {
-      const hero = await selectHero(parsedMessage.heroId);
-      if (hero) {
-        const { hp: maxHp } = calculateStatsHelper(hero);
-
-        //NOTE: eveyrtime we update user stats, we need to update the activeHeroesCache too to keep Hp in sync
-
-        activeHeroesCache.set(hero.id, {
-          nickname: hero.nickname,
-          lvl: hero.lvl!,
-          maxHp: maxHp,
-          currHp: maxHp,
-          status: "idle",
-        });
-        console.log("NEW_HERO_IN_ACTIVE_HERO_POOL", activeHeroesCache);
-      } else {
-        //500 type error as this is really bad!
-      }
+    const heroId = ws.data.heroId;
+    if (!heroId) {
+      ws.send(JSON.stringify({ type: "error", message: "Unauthorised" }));
+      return;
     }
+
+    const requestedLocation =
+      typeof parsedMessage.location === "string"
+        ? parsedMessage.location.trim()
+        : null;
+    if (requestedLocation !== null && requestedLocation.length === 0) {
+      ws.send(JSON.stringify({ type: "error", message: "Invalid location" }));
+      return;
+    }
+
+    const hero = await selectHero(heroId);
+    if (!hero) {
+      ws.send(JSON.stringify({ type: "error", message: "Hero not found" }));
+      return;
+    }
+
+    const location = requestedLocation ?? hero.location;
+    if (requestedLocation && requestedLocation !== hero.location) {
+      await updateHeroLocation(heroId, requestedLocation);
+    }
+
+    const cachedHero = activeHeroesCache.get(heroId);
+    const { hp: maxHp } = calculateStatsHelper(hero);
+    activeHeroesCache.set(heroId, {
+      nickname: hero.nickname,
+      lvl: hero.lvl,
+      sprite: hero.sprite,
+      location,
+      maxHp,
+      currHp: cachedHero?.currHp ?? maxHp,
+      status: cachedHero?.status ?? "idle",
+    });
+
     ws.subscribe(topic.activeHeroes); //to subs to all active_heroes topic
     const activeHeroesArray = Array.from(activeHeroesCache.entries());
     console.log("ALL_ACTIVE_HEROES", activeHeroesArray);
@@ -44,5 +63,7 @@ export const activeHeroesRoute = async (
         heroes: activeHeroesArray,
       }),
     );
-  } catch (err) {}
+  } catch (error) {
+    console.error("Failed to broadcast active heroes", error);
+  }
 };

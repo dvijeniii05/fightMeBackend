@@ -91,6 +91,8 @@ const createHarness = (roomId: string, playerHp = 10_000, botHp = 10_000) => {
   activeHeroesCache.set("player", {
     nickname: "player",
     lvl: 1,
+    sprite: null,
+    location: "red_moon_castle_arena",
     maxHp: playerHp,
     currHp: playerHp,
     status: "busy",

@@ -224,6 +224,20 @@ export const updateHeroSkillLoadout = async (
     .where(eq(heroSxma.id, heroId));
 };
 
+export const updateHeroSprite = async (heroId: string, sprite: number) => {
+  const [updatedHero] = await db
+    .update(heroSxma)
+    .set({ sprite })
+    .where(eq(heroSxma.id, heroId))
+    .returning({ sprite: heroSxma.sprite });
+
+  return updatedHero;
+};
+
+export const updateHeroLocation = async (heroId: string, location: string) => {
+  await db.update(heroSxma).set({ location }).where(eq(heroSxma.id, heroId));
+};
+
 export const incrementHeroCriticalStrikes = async (
   heroId: string,
   amount: number,
