@@ -92,6 +92,8 @@ export const copyBotForFight = async (botId: string, roomId: string) => {
     await tx.insert(heroSxma).values({
       id: newBotId,
       nickname: botTemplate.nickname, //TODO: add random suffix
+      avatar: botTemplate.avatar,
+      sprite: botTemplate.sprite,
       location: botTemplate.location,
       born: botTemplate.born,
       lvl: botTemplate.lvl,
@@ -224,12 +226,15 @@ export const updateHeroSkillLoadout = async (
     .where(eq(heroSxma.id, heroId));
 };
 
-export const updateHeroSprite = async (heroId: string, sprite: number) => {
+export const updateHeroAppearance = async (
+  heroId: string,
+  appearance: { avatar?: number; sprite?: number },
+) => {
   const [updatedHero] = await db
     .update(heroSxma)
-    .set({ sprite })
+    .set(appearance)
     .where(eq(heroSxma.id, heroId))
-    .returning({ sprite: heroSxma.sprite });
+    .returning({ avatar: heroSxma.avatar, sprite: heroSxma.sprite });
 
   return updatedHero;
 };

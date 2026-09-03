@@ -2,9 +2,12 @@ import { randomUUIDv7, type BunRequest } from "bun";
 import { db } from "../drizzle/db";
 import { heroSxma, statsSxma } from "../drizzle/schema/hero";
 import { itemInstanceSxma } from "../drizzle/schema/item";
+import { isAvatarId, isSpriteId } from "../constants/characterAppearance";
 
 interface CreateBotWithItemsBody {
   nickname: string;
+  avatar?: number;
+  sprite?: number;
   stats: {
     strength: number;
     mastery: number;
@@ -36,6 +39,12 @@ export const createBotWithItems = async (
     if (!body.stats) {
       return Response.json({ message: "Stats are required" }, { status: 400 });
     }
+    if (body.avatar !== undefined && !isAvatarId(body.avatar)) {
+      return Response.json({ message: "Invalid avatar ID" }, { status: 400 });
+    }
+    if (body.sprite !== undefined && !isSpriteId(body.sprite)) {
+      return Response.json({ message: "Invalid sprite ID" }, { status: 400 });
+    }
 
     const botId = randomUUIDv7();
 
@@ -44,6 +53,8 @@ export const createBotWithItems = async (
       await tx.insert(heroSxma).values({
         id: botId,
         nickname: body.nickname,
+        avatar: body.avatar,
+        sprite: body.sprite,
         type: "bot",
         lvl: body.lvl,
         exp: 0,
