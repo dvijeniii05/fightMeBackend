@@ -294,3 +294,11 @@ graph LR
 
 This context should provide comprehensive understanding of the project
 structure, patterns, and conventions for all future development requests.
+
+## Validation Workflow
+
+- For routine backend validation, use VS Code diagnostics (`get_errors`).
+- When terminal validation is necessary, use a direct auto-approved terminal
+  command.
+- Do not route validation commands through `execution_subagent`; terminal
+  auto-approval does not cover that tool.
