@@ -39,6 +39,7 @@ export const joinRoomRoute = async (
         selectedRoom.players.push({
           id: parsedMessage.heroId,
           name: hero.nickname,
+          avatar: hero.avatar,
           hp: calcHp,
           maxHp: calcHp,
           stats: calcStats,

@@ -11,6 +11,7 @@ import type {
 export type Player = {
   id: string;
   name: string;
+  avatar?: number | null;
   hp: number; //current Health
   maxHp: number; //initial Health
   stats: {

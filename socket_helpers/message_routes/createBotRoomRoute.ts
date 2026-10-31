@@ -57,6 +57,7 @@ export const createBotRoomRoute = async (
           {
             id: parsedMessage.heroId,
             name: hero.nickname,
+            avatar: hero.avatar,
             hp: calcHp,
             maxHp: calcHp,
             stats: calcStats,
@@ -79,6 +80,7 @@ export const createBotRoomRoute = async (
           {
             id: bot.id,
             name: bot.nickname,
+            avatar: bot.avatar,
             hp: calcBotHp,
             maxHp: calcBotHp,
             stats: calcBotStats,

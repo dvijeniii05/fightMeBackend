@@ -42,6 +42,7 @@ export const createRoomRoute = async (
           {
             id: parsedMessage.heroId,
             name: hero.nickname,
+            avatar: hero.avatar,
             hp: calcHp,
             maxHp: calcHp,
             stats: calcStats,
