@@ -12,6 +12,7 @@ export const activeHeroesRoute = async (
     location?: unknown;
   },
 ) => {
+  let stage = "validate_request";
   try {
     const heroId = ws.data.heroId;
     if (!heroId) {
@@ -28,6 +29,7 @@ export const activeHeroesRoute = async (
       return;
     }
 
+    stage = "load_hero";
     const hero = await selectHero(heroId);
     if (!hero) {
       ws.send(JSON.stringify({ type: "error", message: "Hero not found" }));
@@ -36,9 +38,11 @@ export const activeHeroesRoute = async (
 
     const location = requestedLocation ?? hero.location;
     if (requestedLocation && requestedLocation !== hero.location) {
+      stage = "update_location";
       await updateHeroLocation(heroId, requestedLocation);
     }
 
+    stage = "cache_hero";
     const cachedHero = activeHeroesCache.get(heroId);
     const { hp: maxHp } = calculateStatsHelper(hero);
     activeHeroesCache.set(heroId, {
@@ -51,6 +55,7 @@ export const activeHeroesRoute = async (
       status: cachedHero?.status ?? "idle",
     });
 
+    stage = "broadcast";
     ws.subscribe(topic.activeHeroes); //to subs to all active_heroes topic
     const activeHeroesArray = Array.from(activeHeroesCache.entries());
     console.log("ALL_ACTIVE_HEROES", activeHeroesArray);
@@ -64,6 +69,10 @@ export const activeHeroesRoute = async (
       }),
     );
   } catch (error) {
-    console.error("Failed to broadcast active heroes", error);
+    console.error(
+      "Failed to update active heroes",
+      { stage, heroId: ws.data.heroId },
+      error,
+    );
   }
 };

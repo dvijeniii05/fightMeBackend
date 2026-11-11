@@ -45,7 +45,12 @@ export const commitStrikeRoute = (
 ) => {
   const room = fableFightRoomsCache.get(parsedMessage.roomId);
 
-  if (!room || room.combatVersion !== "fable_v2" || room.matchResult) {
+  if (
+    !room ||
+    room.combatVersion !== "fable_v2" ||
+    room.status !== "active" ||
+    room.matchResult
+  ) {
     rejectCommit(ws, parsedMessage, "invalid_room");
     return;
   }

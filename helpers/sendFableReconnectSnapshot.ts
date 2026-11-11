@@ -28,7 +28,7 @@ export const sendFableReconnectSnapshot = (
   );
   const exchange = round?.exchanges[round.activeExchangeIndex];
 
-  if (!room || !player || !round || !exchange || room.matchResult) {
+  if (!room || !player) {
     return false;
   }
 
@@ -39,6 +39,9 @@ export const sendFableReconnectSnapshot = (
       data: toLegacyRoomSnapshot(room),
     }),
   );
+
+  if (room.status === "waiting" || room.matchResult || !round || !exchange)
+    return true;
 
   const snapshot: FableExchangeSnapshotMessage = {
     type: "exchangeSnapshot",

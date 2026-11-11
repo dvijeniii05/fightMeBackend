@@ -1,5 +1,5 @@
 import { and, eq, sql } from "drizzle-orm";
-import { db } from "../db";
+import { db, readDb } from "../db";
 import { heroSxma, statsSxma, type InsertHero } from "../schema/hero";
 import type { StatsProps } from "../../helpers/calculateStatsHelper";
 import { itemInstanceSxma } from "../schema/item";
@@ -35,7 +35,7 @@ export const insertHero = async ({ data, isBot }: Props) => {
 export const selectHero = async (heroId: string) => {
   // Query the hero with related inventory and stats
   console.log("SELECTING_HERO_FUNC", heroId);
-  const heroWithRelations = await db.query.heroSxma.findFirst({
+  const heroWithRelations = await readDb.query.heroSxma.findFirst({
     where: eq(heroSxma.id, heroId),
     with: {
       stats: true,

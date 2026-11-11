@@ -10,6 +10,11 @@ import { commitStrikeRoute } from "./message_routes/commitStrikeRoute";
 import { submitAttackRoute } from "./message_routes/submitAttackRoute";
 import { submitBlockRoute } from "./message_routes/submitBlockRoute";
 import { submitRoundRoute } from "./message_routes/submitRoundRoute";
+import {
+  cancelPreparedFablePveRoom,
+  readyFablePveRoom,
+} from "../helpers/activateFablePveRoom";
+import { fableFightRoomsCache, userSockets } from "./socketCache";
 
 export const messageRouter = async (
   server: Bun.Server,
@@ -27,6 +32,31 @@ export const messageRouter = async (
       return joinRoomRoute(server, ws, rest);
     case "createBotRoom":
       return createBotRoomRoute(server, ws, rest);
+    case "encounterReady":
+    case "cancelEncounter": {
+      const room = fableFightRoomsCache.get(rest.roomId);
+      if (
+        !room ||
+        !ws.data.heroId ||
+        userSockets.get(ws.data.heroId) !== ws ||
+        room.players[0].id !== ws.data.heroId
+      ) {
+        ws.send(
+          JSON.stringify({
+            type: "encounterPreparationEnded",
+            roomId: rest.roomId,
+            reason: "unavailable",
+          }),
+        );
+        return;
+      }
+      if (type === "cancelEncounter") {
+        cancelPreparedFablePveRoom(room.id, "cancelled");
+      } else {
+        readyFablePveRoom(server, ws, room.id);
+      }
+      return;
+    }
     case "reconnectRoom":
       return reconnectRoomRoute(server, ws, rest);
     case "activeFightRooms":

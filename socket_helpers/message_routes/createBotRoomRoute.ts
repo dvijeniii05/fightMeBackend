@@ -1,9 +1,10 @@
 import { selectHero } from "../../drizzle/queries/hero";
 import { selectFightRoom } from "../../drizzle/queries/fightRoom";
-import { activateFablePveRoom } from "../../helpers/activateFablePveRoom";
+import { prepareFablePveRoom } from "../../helpers/activateFablePveRoom";
+import { sendFableReconnectSnapshot } from "../../helpers/sendFableReconnectSnapshot";
 import { calculateStatsHelper } from "../../helpers/calculateStatsHelper";
 import type { RoomType } from "../../types/roomType";
-import { fightRoomsCache } from "../socketCache";
+import { fightRoomsCache, userRoomsCache, userSockets } from "../socketCache";
 import { topic } from "../socketTopics";
 import { isValidSkillLoadout } from "../../constants/skills";
 
@@ -24,6 +25,13 @@ export const createBotRoomRoute = async (
   // Create a rom in rooms.MAP object
 
   try {
+    if (
+      ws.data.heroId !== parsedMessage.heroId ||
+      userSockets.get(parsedMessage.heroId) !== ws
+    )
+      return;
+    if (sendFableReconnectSnapshot(ws, parsedMessage.heroId)) return;
+    if (userRoomsCache.has(parsedMessage.heroId)) return;
     const hero = await selectHero(parsedMessage.heroId);
     const bot = await selectHero(
       parsedMessage.botId + "-" + parsedMessage.roomId,
@@ -108,7 +116,10 @@ export const createBotRoomRoute = async (
       };
 
       console.log("NEW_ROOM", room);
-      const fableRoom = activateFablePveRoom(server, ws, room);
+      if (userSockets.get(parsedMessage.heroId) !== ws) return;
+      if (sendFableReconnectSnapshot(ws, parsedMessage.heroId)) return;
+      if (userRoomsCache.has(parsedMessage.heroId)) return;
+      const fableRoom = prepareFablePveRoom(ws, room);
       console.log("FABLE_FIGHT_ROOM", fableRoom.id);
 
       const roomsArray = Array.from(fightRoomsCache.values());

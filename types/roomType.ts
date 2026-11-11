@@ -142,6 +142,7 @@ export type FableRound = {
 
 export type FableRoomType = Omit<RoomType, "isPvp" | "players" | "rounds"> & {
   combatVersion: "fable_v2";
+  preparationExpiresAtMs?: number;
   isPvp: false;
   players: [FablePlayer, FablePlayer];
   rounds: FableRound[];

@@ -3,7 +3,12 @@ import {
   ATTACK_PICK_DEADLINE_MS,
   FIGHT_STAMINA,
 } from "../constants/combatTiming";
-import { activateFablePveRoom } from "../helpers/activateFablePveRoom";
+import {
+  activateFablePveRoom,
+  prepareFablePveRoom,
+  readyFablePveRoom,
+} from "../helpers/activateFablePveRoom";
+import { sendFableReconnectSnapshot } from "../helpers/sendFableReconnectSnapshot";
 import {
   deleteFablePveRoom,
   inspectFablePveCoordinator,
@@ -138,3 +143,46 @@ console.log({
 
 deleteFablePveRoom(room.id);
 userRoomsCache.delete("player");
+
+const prepared = prepareFablePveRoom(ws, {
+  ...legacyRoom,
+  id: "prepared-inspection-room",
+});
+try {
+  assert.equal(prepared.status, "waiting");
+  assert.equal(prepared.rounds[0].exchanges[0].deadlines.attackAtMs, null);
+  assert.deepEqual(inspectFablePveCoordinator(prepared.id), {
+    running: false,
+    attackDeadlines: 0,
+    transitions: 0,
+    defenseDeadlines: 0,
+  });
+  const beforeReconnect = directMessages.length;
+  assert.equal(sendFableReconnectSnapshot(ws, "player"), true);
+  assert.equal(directMessages.length, beforeReconnect + 1);
+  assert.equal(JSON.parse(directMessages.at(-1)!).data.status, "waiting");
+  const stranger = { data: { heroId: "stranger" } } as typeof ws;
+  assert.equal(readyFablePveRoom(server, stranger, prepared.id), false);
+  assert.equal(prepared.status, "waiting");
+  const readyAtMs = Date.now();
+  assert.equal(readyFablePveRoom(server, ws, prepared.id, readyAtMs), true);
+  assert.equal(prepared.status, "active");
+  assert.equal(prepared.preparationExpiresAtMs, undefined);
+  assert.equal(
+    prepared.rounds[0].exchanges[0].deadlines.attackAtMs,
+    readyAtMs + ATTACK_PICK_DEADLINE_MS,
+  );
+  const publicationCount = publishedMessages.length;
+  assert.equal(
+    readyFablePveRoom(server, ws, prepared.id, readyAtMs + 500),
+    true,
+  );
+  assert.equal(publishedMessages.length, publicationCount);
+  assert.equal(inspectFablePveCoordinator(prepared.id).attackDeadlines, 1);
+  console.log(
+    "Preparation, reconnect, ownership, fresh deadline, and duplicate readiness checks passed.",
+  );
+} finally {
+  deleteFablePveRoom(prepared.id);
+  userRoomsCache.delete("player");
+}

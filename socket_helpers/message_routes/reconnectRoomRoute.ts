@@ -1,4 +1,5 @@
 import { fightRoomsCache, userRoomsCache, userSockets } from "../socketCache";
+import { sendFableReconnectSnapshot } from "../../helpers/sendFableReconnectSnapshot";
 
 export const reconnectRoomRoute = (
   server: Bun.Server,
@@ -12,6 +13,12 @@ export const reconnectRoomRoute = (
   console.log("RECONNECT_ROOM");
 
   try {
+    if (
+      ws.data.heroId !== parsedMessage.heroId ||
+      userSockets.get(parsedMessage.heroId) !== ws
+    )
+      return;
+    if (sendFableReconnectSnapshot(ws, parsedMessage.heroId)) return;
     const userRoom = userRoomsCache.get(parsedMessage.heroId);
 
     if (!userRoom) {

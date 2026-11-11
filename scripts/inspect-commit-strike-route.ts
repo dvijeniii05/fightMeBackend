@@ -148,6 +148,14 @@ const rejectionCases: Array<{
   socketHeroId?: string;
 }> = [
   {
+    name: "prepared room",
+    payload: baseCommit,
+    expectedReason: "invalid_room",
+    prepare: room => {
+      room.status = "waiting";
+    },
+  },
+  {
     name: "stale round",
     payload: { ...baseCommit, roundNumber: 2 },
     expectedReason: "stale_exchange",
